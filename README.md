@@ -1,7 +1,8 @@
 # GAMES 课程精讲学习手册（网站版）
 
 > 基于 GAMES101 / GAMES104 / GAMES202 / GAMES105 四门课程课件整理的逐讲精讲中文手册。
-> 在线版：GitHub Pages（见仓库 About / 下方链接）
+> 在线版：**https://lin-wan-fish.github.io/games-study-handbook/**
+> 源码：https://github.com/LIn-Wan-fish/games-study-handbook
 
 ## 打开方式
 
