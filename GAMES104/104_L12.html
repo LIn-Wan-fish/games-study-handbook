@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-tone="2" data-root="../">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 12 讲：粒子系统与音频系统 · GAMES 学习手册</title>
+<meta name="description" content="从粒子发射、模拟、渲染到 GPU 粒子，再到 3D 音频的空间化、衰减与混响，搭建游戏特效与声音的两大支柱。">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230066cc'/%3E%3Ctext x='16' y='22' font-family='-apple-system,Segoe UI,sans-serif' font-size='17' font-weight='800' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var t = q === 'light' || q === 'dark' ? q : localStorage.getItem('theme');
+    var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+</script>
+</head><div class="bg-aura" aria-hidden="true"></div><header class="topbar"><div class="topbar-left"><a class="nav-pill brand-pill" href="../index.html" aria-label="GAMES 学习手册首页"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-text"><b>GAMES 学习手册</b><small>计算机图形学 · 3A 游戏开发</small></span></a><span class="nav-pill crumb-pill"><a href="../index.html">首页</a> / <a href="../GAMES104/index.html">GAMES104</a> / <b>粒子与音频</b></span></div><nav class="topbar-center seg-tabs" aria-label="课程切换"><a class="seg-tab" href="../GAMES101/index.html" data-tone="1"><span class="seg-code">GAMES101</span></a><a class="seg-tab active" href="../GAMES104/index.html" data-tone="2"><span class="seg-code">GAMES104</span></a><a class="seg-tab" href="../GAMES202/index.html" data-tone="3"><span class="seg-code">GAMES202</span></a><a class="seg-tab" href="../GAMES105/index.html" data-tone="4"><span class="seg-code">GAMES105</span></a></nav><div class="topbar-right"><button class="topbar-ctl search-btn" type="button" data-search-open aria-label="搜索知识点"><span class="s-ico" aria-hidden="true">⌕</span><span class="s-label">搜索</span><kbd>/</kbd></button><button class="topbar-ctl theme-btn" type="button" data-theme-toggle aria-label="切换主题"><span aria-hidden="true">◐</span><span class="t-label" data-theme-label>浅色</span></button><button class="topbar-ctl print-btn" type="button" data-print aria-label="打印本页"><span class="p-ico" aria-hidden="true">⎙</span><span class="p-label">打印</span></button><button class="topbar-ctl menu-btn" type="button" data-side-toggle aria-label="打开目录" aria-expanded="false">☰</button></div></header><div class="shell-body"><aside class="sidebar material" aria-label="目录"><div class="side-block"><p class="sidebar-h">本讲目录</p><ul class="toc page-toc"><li><a href="#s1">1. 粒子系统是什么：从雪花到刀光</a></li><li><a href="#s2">2. 粒子怎么动：模拟与常见属性</a></li><li><a href="#s3">3. 粒子长什么样：Billboard、Mesh 与 Ribbon</a></li><li><a href="#s4">4. 半透明粒子的排序与低分辨率渲染</a></li><li><a href="#s5">5. GPU 粒子：把模拟搬到显卡上</a></li><li><a href="#s6">6. 声音的物理与数字基础</a></li><li><a href="#s7">7. 3D 音频：空间化、衰减与遮挡</a></li></ul></div><div class="side-block"><p class="sidebar-h">全部讲次<span class="count">20 讲</span></p><ul class="toc lecture-toc"><li><a href="../GAMES104/index.html"><span class="lec-no">◎</span><span>课程总览</span></a></li><li><a class="" href="../GAMES104/104_L01.html"><span class="lec-no">L01</span><span>游戏引擎导论</span></a></li><li><a class="" href="../GAMES104/104_L02.html"><span class="lec-no">L02</span><span>引擎分层架构</span></a></li><li><a class="" href="../GAMES104/104_L03.html"><span class="lec-no">L03</span><span>构建游戏世界</span></a></li><li><a class="" href="../GAMES104/104_L04.html"><span class="lec-no">L04</span><span>渲染总览</span></a></li><li><a class="" href="../GAMES104/104_L05.html"><span class="lec-no">L05</span><span>渲染：光照材质着色器</span></a></li><li><a class="" href="../GAMES104/104_L06.html"><span class="lec-no">L06</span><span>渲染：地形/天空/云</span></a></li><li><a class="" href="../GAMES104/104_L07.html"><span class="lec-no">L07</span><span>渲染管线与后处理</span></a></li><li><a class="" href="../GAMES104/104_L08.html"><span class="lec-no">L08</span><span>动画系统</span></a></li><li><a class="" href="../GAMES104/104_L09.html"><span class="lec-no">L09</span><span>动画系统进阶</span></a></li><li><a class="" href="../GAMES104/104_L10.html"><span class="lec-no">L10</span><span>物理系统</span></a></li><li><a class="" href="../GAMES104/104_L11.html"><span class="lec-no">L11</span><span>物理系统应用</span></a></li><li><a class="active" href="../GAMES104/104_L12.html"><span class="lec-no">L12</span><span>粒子与音频</span></a></li><li><a class="" href="../GAMES104/104_L14.html"><span class="lec-no">L14</span><span>工具链</span></a></li><li><a class="" href="../GAMES104/104_L15.html"><span class="lec-no">L15</span><span>玩法系统 Gameplay</span></a></li><li><a class="" href="../GAMES104/104_L16.html"><span class="lec-no">L16</span><span>游戏 AI 基础</span></a></li><li><a class="" href="../GAMES104/104_L17.html"><span class="lec-no">L17</span><span>进阶 AI 与机器学习</span></a></li><li><a class="" href="../GAMES104/104_L18.html"><span class="lec-no">L18</span><span>在线游戏架构</span></a></li><li><a class="" href="../GAMES104/104_L19.html"><span class="lec-no">L19</span><span>在线游戏架构（下）</span></a></li><li><a class="" href="../GAMES104/104_L20.html"><span class="lec-no">L20</span><span>面向数据编程与 Job Syst</span></a></li><li><a class="" href="../GAMES104/104_L21.html"><span class="lec-no">L21</span><span>动态全局光照与 Lumen</span></a></li></ul></div><div class="side-foot">基于 GAMES104 课件整理 · 仅供个人学习<br><a href="../index.html">← 返回手册首页</a></div></aside><div class="side-scrim"></div><main class="page"><article class="article"><header class="ch-head"><span class="ch-course">GAMES104 · 现代游戏引擎：理论、实践与架构</span><h1 class="ch-title">第 12 讲：粒子系统与音频系统</h1><p class="ch-sub">从粒子发射、模拟、渲染到 GPU 粒子，再到 3D 音频的空间化、衰减与混响，搭建游戏特效与声音的两大支柱。</p><div class="ch-meta"><span class="chip">课件 <b>107</b> 页</span><span class="chip">精讲 <b>7</b> 节</span><span class="chip">术语 <b>10</b> 条</span><span class="chip">练习 <b>5</b> 道</span></div></header><div class="objectives"><div class="callout key"><p class="callout-h">◆ 学完这一讲，你应该能</p><ul><li><p>能描述粒子系统的组成（粒子、发射器、系统）与生命周期，并解释发射器的三大职责。</p></li><li><p>能说明粒子模拟中速度、加速度、位置更新的基本积分过程，并列举常见模拟属性（重力、颜色、大小、碰撞）。</p></li><li><p>能区分 Billboard、Mesh、Ribbon 三类粒子的渲染方式与适用场景。</p></li><li><p>能解释 Alpha 混合排序的必要性、排序层级（全局/发射器/粒子间）以及低分辨率粒子渲染与双边升采样的流程。</p></li><li><p>能概述 GPU 粒子的帧流程（初始化、生成、模拟、排序、渲染、交换）及并行归并排序的两种思路。</p></li><li><p>能说明声音的物理量（声压、声强、声压级）、数字音频基础（PCM、采样定理、量化）以及 3D 音频的空间化、衰减、遮挡与混响等概念。</p></li></ul></div></div><div class="keybox"><p class="keybox-h">核心结论速记</p><ol class="keybox-list"><li><p>粒子系统由粒子、发射器、系统三层组成：发射器定义生成规则、模拟逻辑和渲染方式，系统是多个发射器的集合。</p></li><li><p>粒子模拟的核心是每帧用加速度更新速度、用速度更新位置；重力、颜色、大小、旋转、碰撞等都是在此框架上叠加的模块。</p></li><li><p>Billboard 粒子始终面向相机，Mesh 粒子是 3D 模型，Ribbon 粒子把相邻粒子连成条带，常用于刀光、拖尾。</p></li><li><p>半透明粒子必须按到相机的距离排序才能正确混合；排序粒度从粗到细分为系统间、发射器间、粒子间，全局排序最准确但开销大。</p></li><li><p>低分辨率粒子渲染先把粒子画到半分辨率缓冲，再用双边升采样合成到全分辨率场景，可大幅降低填充率开销。</p></li><li><p>GPU 粒子用计算着色器并行模拟，核心是粒子池 + 死/活列表 + 原子操作，每帧执行生成、模拟、剔除、排序、渲染、交换列表。</p></li><li><p>3D 音频需要声源（单声道信号 + 位置）和听者（虚拟麦克风：位置、速度、朝向），通过声像平移、衰减、遮挡、混响等营造空间感。</p></li><li><p>等功率声像平移保持左右声道功率恒定（用正弦/余弦曲线），比线性平移听感更自然；距离衰减近似球面波声压随距离反比下降。</p></li></ol></div><section class="sec" id="s1"><h2><span class="h2-no">01</span><span>1. 粒子系统是什么：从雪花到刀光</span></h2><div class="sec-body"><p>粒子系统（Particle System）是游戏里制造「模糊、大量、动态」视觉效果的主力工具。课件引用了 William Reeves 的定义：粒子系统是大量微小粒子的集合，这些粒子共同表现一个模糊物体；粒子随着时间被生成、在系统内移动和变化、最终消亡。</p>
+<p><strong>三层结构</strong>：</p>
+<ul>
+<li><strong>粒子（Particle）</strong>：通常是一个 sprite（二维贴图）或 3D 模型，拥有位置、速度、大小、颜色、生命周期等属性。</li>
+<li><strong>发射器（Particle Emitter）</strong>：定义粒子如何被模拟，负责三件事：① 生成规则（spawn rules）——在哪里、以什么频率生成；② 模拟逻辑（simulation logic）——每帧如何更新；③ 渲染方式（how to render）——用 Billboard、Mesh 还是 Ribbon 画出来。</li>
+<li><strong>粒子系统（Particle System）</strong>：多个发射器的集合。一个复杂的爆炸效果往往由「火焰发射器 + 烟雾发射器 + 火星发射器」组合而成。</li>
+</ul>
+<p><strong>生命周期</strong>：粒子从生成（spawn）开始，经历每帧的模拟更新，直到寿命耗尽或满足消亡条件（如碰撞、移出边界）后死亡。</p>
+<p><strong>生成位置</strong>有三种常见方式：单点生成（Single position）、按区域生成（Spawn based on area）、按网格表面生成（Spawn based on mesh）。生成模式分为连续生成（Continuous，每帧按速率生成，可基于时间或距离）和爆发生成（Burst，一次性生成一批粒子并同时模拟）。</p>
+<blockquote>
+<p>直觉：发射器像「水龙头」，粒子像「水滴」，系统像「一组水龙头组成的喷泉」。水龙头的开关规则、水压、喷口形状分别对应生成规则、模拟参数和渲染方式。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0010.webp" alt="图注：发射器的三大职责——生成规则、模拟逻辑、渲染方式。看图时注意这三者如何共同定义一个发射器的行为。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.11</span><span>图注：发射器的三大职责——生成规则、模拟逻辑、渲染方式。看图时注意这三者如何共同定义一个发射器的行为。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0014.webp" alt="图注：连续生成与爆发生成的对比。连续生成适合火焰、烟雾，爆发生成适合爆炸、烟花。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.15</span><span>图注：连续生成与爆发生成的对比。连续生成适合火焰、烟雾，爆发生成适合爆炸、烟花。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>粒子数量过多导致帧率骤降 → 发射速率或生命周期设置过大 → 检查发射器的 spawn rate 与 lifetime，必要时用 LOD 或 GPU 粒子。</p></li><li><p>粒子在场景中「凭空出现」→ 生成位置是单点且没有初始速度扩散 → 改用区域生成或给粒子一个初始速度锥。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Niagara 中，Emitter 对应「发射器」，System 对应「粒子系统」，每个 Emitter 有 Spawn、Update、Render 等模块组。</p></li><li><p>Unity 的 Particle System 组件本身就是一个系统，其下的子发射器（Sub Emitters）对应「发射器集合」的概念。</p></li></ul></div></section><section class="sec" id="s2"><h2><span class="h2-no">02</span><span>2. 粒子怎么动：模拟与常见属性</span></h2><div class="sec-body"><p>粒子模拟（Simulate）控制粒子随时间如何变化。最核心的更新规则是每帧执行：</p>
+<p>\[
+\vec{v}_{t+1} = \vec{v}_t + \vec{a} \, \Delta t
+\]
+\[
+\vec{p}_{t+1} = \vec{p}_t + \vec{v}_{t+1} \, \Delta t
+\]</p>
+<p>其中 \(\vec{a}\) 是加速度（由重力、风力、阻力等力产生），\(\vec{v}\) 是速度，\(\vec{p}\) 是位置。课件用 Frame1 到 Frame4 的示意图强调：加速度更新速度，速度再更新位置。</p>
+<p><strong>常见模拟属性</strong>：</p>
+<ul>
+<li><strong>重力（Gravity）</strong>：给所有粒子一个恒定的向下加速度，模拟下落。</li>
+<li><strong>旋转（Rotation）</strong>：粒子可以绕自身轴旋转，增加动态感。</li>
+<li><strong>颜色（Color）</strong>：粒子颜色随时间变化，例如火焰从亮黄渐变为暗红。</li>
+<li><strong>大小（Size）</strong>：粒子大小随时间缩放，例如烟雾扩散变大。</li>
+<li><strong>碰撞（Collision）</strong>：粒子与场景碰撞后反弹、消失或粘附。</li>
+</ul>
+<p>这些属性通常以「模块」形式叠加在基础模拟之上，每个模块只负责一种行为。</p>
+<blockquote>
+<p>直觉：粒子模拟就像给每个粒子单独做一次「迷你物理更新」，只不过没有刚体之间的复杂约束，只有简单的力与积分。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0016.webp" alt="图注：粒子每帧更新的顺序——加速度更新速度，速度更新位置。注意图中 Frame1~Frame4 的递进关系。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.17</span><span>图注：粒子每帧更新的顺序——加速度更新速度，速度更新位置。注意图中 Frame1~Frame4 的递进关系。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0019.webp" alt="图注：无碰撞与有碰撞的粒子对比。碰撞让粒子与场景交互，但计算开销更大。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.20</span><span>图注：无碰撞与有碰撞的粒子对比。碰撞让粒子与场景交互，但计算开销更大。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>粒子运动速度与帧率相关 → 更新时没有乘 \(\Delta t\) → 确保每帧更新使用时间步长，或使用固定时间步。</p></li><li><p>粒子颜色/大小变化不生效 → 模块顺序错误或曲线未启用 → 检查模块的更新顺序和曲线关键帧。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE Niagara 中，Gravity Force、Color、Scale、Collision 等模块直接对应上述属性，可在 Emitter Update 和 Particle Update 阶段添加。</p></li><li><p>Unity Particle System 的「Force over Lifetime」「Color over Lifetime」「Size over Lifetime」「Collision」模块分别对应重力、颜色、大小、碰撞。</p></li></ul></div></section><section class="sec" id="s3"><h2><span class="h2-no">03</span><span>3. 粒子长什么样：Billboard、Mesh 与 Ribbon</span></h2><div class="sec-body"><p>粒子最终要渲染出来，课件介绍了三种粒子类型：</p>
+<ul>
+<li><strong>Billboard 粒子</strong>：每个粒子是一个 sprite（二维贴图），但它看起来像 3D 的，因为它始终面向相机（always face the camera）。这是最常用、最省性能的类型，适合火焰、烟雾、光晕。</li>
+<li><strong>Mesh 粒子</strong>：每个粒子是一个 3D 模型，例如爆炸中飞出的碎石。它保留模型的立体形状，但每个粒子都是一个独立网格，开销比 Billboard 大。</li>
+<li><strong>Ribbon 粒子</strong>：把相邻粒子连接起来，在相邻粒子之间渲染四边形（quad），形成一条条带。常用于刀光（slash）、拖尾、闪电。</li>
+</ul>
+<p><strong>Ribbon 粒子的细节</strong>：</p>
+<ul>
+<li>粒子本身是条带上的控制点（课件图中红点）。</li>
+<li>如果不做平滑，条带在粒子转折处会出现尖锐的折角（sharp angles），看起来生硬。</li>
+<li>平滑方案：在粒子之间插入额外分段（extra segments），并使用向心 Catmull-Rom 插值（Centripetal Catmull-Rom interpolation）。分段数可设置，但会增加 CPU 开销。</li>
+</ul>
+<blockquote>
+<p>直觉：Billboard 像「贴纸」，Mesh 像「小石子」，Ribbon 像「用绳子把珠子串起来」。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0020.webp" alt="图注：三种粒子类型对比——Billboard、Mesh、Ribbon。看图时注意它们各自的几何形态。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.21</span><span>图注：三种粒子类型对比——Billboard、Mesh、Ribbon。看图时注意它们各自的几何形态。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0026.webp" alt="图注：使用向心 Catmull-Rom 插值平滑 Ribbon 粒子，在粒子间增加分段。注意平滑前后折角的区别。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.27</span><span>图注：使用向心 Catmull-Rom 插值平滑 Ribbon 粒子，在粒子间增加分段。注意平滑前后折角的区别。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>Billboard 粒子在相机移动时「抖动」或方向错误 → Billboard 的朝向计算依赖相机，若相机快速旋转可能产生跳变 → 检查 Billboard 模式（如面向相机平面还是面向相机位置）。</p></li><li><p>Ribbon 粒子出现断裂或扭曲 → 粒子间距过大或插值参数不当 → 增加粒子密度或调整 Catmull-Rom 的张力参数。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE Niagara 中，Renderer 模块可选择 Sprite（对应 Billboard）、Mesh、Ribbon 渲染器。</p></li><li><p>Unity Particle System 的 Render Mode 可选 Billboard、Stretched Billboard、Horizontal Billboard、Vertical Billboard、Mesh；Trail 模块可做拖尾。</p></li></ul></div></section><section class="sec" id="s4"><h2><span class="h2-no">04</span><span>4. 半透明粒子的排序与低分辨率渲染</span></h2><div class="sec-body"><p>粒子通常是半透明的，渲染时需要 Alpha 混合：</p>
+<p>\[
+C_{\text{result}} = C_{\text{src}} \cdot \alpha_{\text{src}} + C_{\text{dst}} \cdot (1 - \alpha_{\text{src}})
+\]</p>
+<p>混合顺序至关重要：如果先画近处再画远处，远处粒子会被错误地混合到近处粒子之上，结果与排序后完全不同。因此半透明粒子必须按到相机的距离排序（通常从远到近）。</p>
+<p><strong>排序层级</strong>：</p>
+<ul>
+<li><strong>全局排序（Global）</strong>：对所有粒子统一按距离排序，最准确但性能开销大。</li>
+<li><strong>层级排序（Hierarchy）</strong>：按「系统 → 发射器 → 发射器内部粒子」逐层排序。系统/发射器之间用包围盒距离，粒子之间用粒子到相机的距离。</li>
+<li>课件还展示了 Per Emitter Sort（每个发射器内部排序）和 Global Sort 的对比。</li>
+</ul>
+<p><strong>全分辨率粒子的问题</strong>：如果粒子铺满屏幕，每个像素都要执行混合，填充率开销巨大（costly，worst case as particles fill the screen）。</p>
+<p><strong>低分辨率粒子渲染</strong>：</p>
+<ol>
+<li>把场景渲染到全分辨率缓冲。</li>
+<li>把粒子渲染到半分辨率（或更低）的离屏缓冲，同时输出粒子颜色（RGB）和粒子 Alpha。</li>
+<li>对半分辨率粒子缓冲做双边升采样（Bilateral Upsampling），结合半分辨率深度和全分辨率场景深度，避免边缘模糊。</li>
+<li>用升采样后的粒子颜色与场景颜色混合：
+\[
+C_{\text{result}} = C_{\text{dst}} \cdot (1 - \alpha_{\text{src}}) + C_{\text{src}} \cdot \alpha_{\text{src}}
+\]
+\[
+\alpha_{\text{result}} = \alpha_{\text{dst}} \cdot (1 - \alpha_{\text{src}}) + \alpha_{\text{src}}
+\]</li>
+</ol>
+<blockquote>
+<p>直觉：低分辨率粒子就像「先在小画布上画烟雾，再放大贴到大画布上」，因为烟雾本身模糊，放大损失不明显，但省了大量像素填充。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0028.webp" alt="图注：Alpha 混合顺序——未排序与排序后的混合结果对比。注意排序如何影响最终颜色。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.29</span><span>图注：Alpha 混合顺序——未排序与排序后的混合结果对比。注意排序如何影响最终颜色。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0033.webp" alt="图注：低分辨率粒子渲染流程——降采样、半分辨率深度、双边升采样、合成。看图时注意每个缓冲的分辨率与用途。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.34</span><span>图注：低分辨率粒子渲染流程——降采样、半分辨率深度、双边升采样、合成。看图时注意每个缓冲的分辨率与用途。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>粒子出现「方块状」硬边 → 低分辨率缓冲升采样时未使用双边权重 → 检查双边升采样是否结合了深度信息。</p></li><li><p>粒子之间互相遮挡关系错误 → 排序粒度太粗（只按发射器排序）→ 改用全局排序或增加排序层级。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Niagara 有「Sort Mode」选项（如 View Depth、View Distance），对应粒子排序；半透明渲染在管线中自动处理排序。</p></li><li><p>Unity 的 Particle System 有「Sort Mode」（By Distance、Oldest in Front 等）和「Sorting Fudge」控制排序偏移。</p></li></ul></div></section><section class="sec" id="s5"><h2><span class="h2-no">05</span><span>5. GPU 粒子：把模拟搬到显卡上</span></h2><div class="sec-body"><p>当粒子数量达到数万甚至百万级时，CPU 逐粒子更新会成为瓶颈。GPU 粒子利用计算着色器（Compute Shader）的高度并行性来模拟粒子。</p>
+<p><strong>为什么用 GPU</strong>：</p>
+<ul>
+<li>粒子模拟是高度并行的任务，适合大量粒子同时计算。</li>
+<li>解放 CPU 去处理游戏逻辑。</li>
+<li>容易访问深度缓冲来做碰撞。</li>
+</ul>
+<p><strong>帧流程</strong>（课件以「粒子池」为核心）：</p>
+<ol>
+<li><strong>初始状态</strong>：粒子池是一个大缓冲，所有槽位初始为 DEAD（可用）。</li>
+<li><strong>生成粒子</strong>：调度计算着色器线程执行生成计算；访问死列表（dead list）和活列表（alive list）需要原子操作（atomic），避免多线程冲突。</li>
+<li><strong>模拟</strong>：调度 <code>alive_count_0</code> 个线程，计算位置、速度、深度碰撞等，把数据写回粒子池；同时做视锥剔除（frustum culling），把可见粒子写入距离缓冲。</li>
+<li><strong>排序、渲染与交换</strong>：按距离对剔除后的活列表排序，渲染粒子，然后交换活列表（为下一帧准备）。</li>
+</ol>
+<p><strong>并行归并排序（Parallel Mergesort）</strong>：</p>
+<ul>
+<li>方法一：每个源元素一个线程，每个线程决定「我去哪里？」——问题是写入不连续。</li>
+<li>方法二（更好）：每个目标元素一个线程，每个线程询问「我从哪里来？」——写入连续，效率更高。</li>
+</ul>
+<p><strong>深度缓冲碰撞</strong>：把粒子位置重投影到上一帧的屏幕空间纹理坐标，读取上一帧深度纹理，检查粒子是否与深度缓冲碰撞（但不要完全在物体背后，需考虑厚度值 thickness）。</p>
+<blockquote>
+<p>直觉：GPU 粒子像「把每个粒子交给一个工人同时处理」，而 CPU 粒子像「一个工人依次处理所有粒子」。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0037.webp" alt="图注：GPU 粒子的初始状态——粒子池中所有槽位为 DEAD。注意死列表与活列表的结构。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.38</span><span>图注：GPU 粒子的初始状态——粒子池中所有槽位为 DEAD。注意死列表与活列表的结构。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0039.webp" alt="图注：GPU 粒子模拟阶段——调度 alive_count_0 个线程，写回粒子池并做视锥剔除。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.40</span><span>图注：GPU 粒子模拟阶段——调度 alive_count_0 个线程，写回粒子池并做视锥剔除。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>GPU 粒子数量超过池容量 → 生成时没有检查死列表是否为空 → 在生成前检查可用槽位，或扩大池容量。</p></li><li><p>粒子碰撞穿透薄物体 → 深度缓冲碰撞只检查单点深度，未考虑厚度 → 增加厚度阈值或使用多次采样。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE Niagara 支持 GPU 粒子模拟（GPU Simulation），在 Emitter 属性中可切换 Sim Target 为 GPUCompute Sim。</p></li><li><p>Unity 的 VFX Graph 默认在 GPU 上运行，使用 Compute Shader 模拟大量粒子。</p></li></ul></div></section><section class="sec" id="s6"><h2><span class="h2-no">06</span><span>6. 声音的物理与数字基础</span></h2><div class="sec-body"><p>声音在游戏中承担娱乐、增强真实感、营造氛围三大作用。课件用「有声音/无声音」的对比图说明声音对体验的巨大影响。</p>
+<p><strong>物理量</strong>：</p>
+<ul>
+<li><strong>声压（Sound Pressure）</strong>：声波引起的局部大气压偏离，单位帕斯卡（Pa）。</li>
+<li><strong>质点速度（Particle Velocity）</strong>：介质中粒子传递波时的速度，单位 m/s。</li>
+<li><strong>声强（Sound Intensity）</strong>：声波携带的功率，单位 W/m²。</li>
+<li><strong>声压级（Sound Pressure Level, SPL）</strong>：声压相对于参考值的对数度量，单位分贝（dB）。参考声压 \(p_0\) 通常取人耳听阈（约 20 μPa， roughly the sound of a mosquito flying 3 meters away）。公式为：
+\[
+L_p = 20 \log_{10}\left(\frac{p}{p_0}\right) \text{ dB}
+\]</li>
+</ul>
+<p><strong>音调（Pitch）</strong>：由声波频率决定，频率越高音调越高。
+<strong>音色（Timbre）</strong>：由泛音/谐波的频率与相对强度组合决定，让我们能区分不同乐器。
+<strong>相位与噪声抵消</strong>：相同频率、相同振幅但相位不同的声波叠加可能相互抵消。</p>
+<p><strong>人耳听觉特性</strong>：可听频率范围约 20 Hz ~ 20 kHz，声压级范围约 0 ~ 130 dB。</p>
+<p><strong>数字音频</strong>：</p>
+<ul>
+<li><strong>PCM（脉冲编码调制）</strong>：采样（Sampling）、量化（Quantizing）、编码（Encoding）三步。</li>
+<li><strong>采样频率</strong>：每秒采样次数（Hz）。奈奎斯特-香农采样定理：采样频率至少是信号最高频率分量的两倍，才能无失真恢复。</li>
+<li><strong>量化位深</strong>：每个采样点的比特数，决定动态范围。</li>
+<li><strong>常见格式</strong>：WAV（无压缩，质量高、体积大）、FLAC（无损压缩）、MP3/OGG（有损压缩）。</li>
+</ul>
+<blockquote>
+<p>直觉：数字音频就像「用格子纸描摹连续曲线」——采样是横向格子密度，量化是纵向格子精度。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0063.webp" alt="图注：声压级的定义与参考声压。注意分贝是对数尺度，人耳对响度的感知也近似对数。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.64</span><span>图注：声压级的定义与参考声压。注意分贝是对数尺度，人耳对响度的感知也近似对数。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0070.webp" alt="图注：奈奎斯特-香农采样定理——采样频率至少为最高频率的两倍。看图理解欠采样如何导致混叠。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.71</span><span>图注：奈奎斯特-香农采样定理——采样频率至少为最高频率的两倍。看图理解欠采样如何导致混叠。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>音频出现混叠噪声 → 采样频率低于信号最高频率的两倍 → 提高采样率或在采样前做低通滤波。</p></li><li><p>音量调节感觉不线性 → 直接线性缩放振幅，但人耳对响度感知近似对数 → 使用分贝刻度或对数曲线调节。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Sound Wave 资产可设置采样率、位深；音频格式支持 WAV、ADPCM 等。</p></li><li><p>Unity 的 Audio Clip 导入设置中可选择 Load Type、Compression Format（PCM、ADPCM、Vorbis、MP3）。</p></li></ul></div></section><section class="sec" id="s7"><h2><span class="h2-no">07</span><span>7. 3D 音频：空间化、衰减与遮挡</span></h2><div class="sec-body"><p>3D 音频让声音从场景中的特定位置发出，并随听者位置变化。</p>
+<p><strong>声源（3D Sound Source）</strong>：一个单声道音频信号，从特定位置发出。
+<strong>听者（Listener）</strong>：虚拟麦克风，拥有位置、速度、朝向。</p>
+<p><strong>空间化（Spatialization）</strong>：把声音相对听者定向的技术，包括：</p>
+<ul>
+<li><strong>声像平移（Panning）</strong>：把音频信号分配到新的立体声或多声道声场。</li>
+<li>线性平移：左右声道增益之和为 1。但人耳感知的响度与声波功率成正比，功率等于振幅的平方，所以线性平移在中间位置功率会下降。</li>
+<li>
+<p><strong>等功率平移（Equal Power Panning）</strong>：保持功率恒定，常用正弦/余弦曲线：
+  \[
+  g_L = \cos\left(\frac{\pi}{2} x\right), \quad g_R = \sin\left(\frac{\pi}{2} x\right)
+  \]
+  其中 \(x \in [0,1]\) 是声像位置。</p>
+</li>
+<li>
+<p><strong>声场（Soundfield）</strong>：全环绕声，也称 Ambisonics，用于视频和 VR。</p>
+</li>
+<li><strong>双耳音频（Binaural Audio）</strong>：通过 HRTF 等模拟人耳听到的空间感。</li>
+</ul>
+<p><strong>衰减（Attenuation）</strong>：听者远离声源时音量衰减。真实世界中球面波声压随距离 \(r\) 反比下降：
+\[
+p \propto \frac{1}{r}
+\]
+衰减形状（Attenuation Shape）包括：</p>
+<ul>
+<li><strong>球体（Sphere）</strong>：最常用，模拟真实点声源。</li>
+<li><strong>胶囊体（Capsule）</strong>：适合水管等长条声源。</li>
+<li><strong>盒体（Box）</strong>：适合房间环境音。</li>
+<li><strong>锥体（Cone）</strong>：适合定向声源，如广播喇叭。</li>
+</ul>
+<p><strong>遮挡与阻塞（Obstruction and Occlusion）</strong>：从听者向声源发射多条发散射线，查询命中表面的材质属性，根据被挡射线的数量决定声音能量被吸收多少。</p>
+<p><strong>混响（Reverb）</strong>：在含反射面的环境中，听者收到三类声波：直达声（dry）、早期反射（echo）、晚期混响（tail）。混响时间（Reverberation Time）衡量声音衰减快慢，由房间大小和材料决定。吸收系数 \(\alpha\) 与材料数量决定吸收量。混响效果的控制参数包括预延迟（Pre-delay）、高频比（HF ratio）等。</p>
+<p><strong>多普勒效应（Doppler Effect）</strong>：波源与观察者相对运动导致频率变化：
+\[
+f' = f \cdot \frac{v + v_0}{v - v_s}
+\]
+其中 \(f\) 是原始频率，\(f'\) 是观察频率，\(v\) 是声速，\(v_0\) 是听者速度，\(v_s\) 是声源速度。</p>
+<blockquote>
+<p>直觉：3D 音频就像在虚拟世界里放了一个「麦克风」，所有声音根据它和声源的位置关系被重新计算。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0078.webp" alt="图注：线性平移的增益分配。注意左右增益之和为 1，但中间位置功率下降。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.79</span><span>图注：线性平移的增益分配。注意左右增益之和为 1，但中间位置功率下降。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0081.webp" alt="图注：等功率平移的正弦/余弦曲线。保持功率恒定，听感更自然。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.82</span><span>图注：等功率平移的正弦/余弦曲线。保持功率恒定，听感更自然。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L12/p0089.webp" alt="图注：遮挡与阻塞——从听者向声源发射多条射线，根据命中材质和遮挡比例计算声音吸收。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.90</span><span>图注：遮挡与阻塞——从听者向声源发射多条射线，根据命中材质和遮挡比例计算声音吸收。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>声音在中间位置听起来变小 → 使用了线性平移 → 改用等功率平移曲线。</p></li><li><p>多普勒效应导致声音「怪叫」→ 声源速度计算错误或未做限幅 → 检查速度单位，限制最大频移。</p></li><li><p>遮挡计算开销大 → 每帧对每个声源发射大量射线 → 降低射线数量或更新频率。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Audio Volume 和 Attenuation 资产可设置衰减形状（Sphere、Capsule、Box、Cone）和空间化参数。</p></li><li><p>Unity 的 Audio Source 有 Spatial Blend、Attenuation 曲线、Doppler Level、Spread 等参数；Audio Listener 挂在相机上。</p></li></ul></div></section><h2><span>引擎对照表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>概念 / 效果</th><th>Unreal Engine</th><th>Unity</th></tr></thead><tbody><tr><td><p>粒子发射器</p></td><td><p>Niagara Emitter（Spawn/Update/Render 模块组）</p></td><td><p>Particle System 组件（含 Sub Emitters）</p></td></tr><tr><td><p>粒子渲染类型</p></td><td><p>Niagara Renderer：Sprite、Mesh、Ribbon</p></td><td><p>Render Mode：Billboard、Mesh；Trail 模块</p></td></tr><tr><td><p>GPU 粒子</p></td><td><p>Niagara GPU Simulation（GPUCompute Sim）</p></td><td><p>VFX Graph（默认 GPU 模拟）</p></td></tr><tr><td><p>粒子排序</p></td><td><p>Niagara Sort Mode（View Depth/Distance）</p></td><td><p>Particle System Sort Mode（By Distance 等）</p></td></tr><tr><td><p>3D 音频衰减</p></td><td><p>Attenuation 资产（Sphere/Capsule/Box/Cone）</p></td><td><p>Audio Source 的 Attenuation 曲线与 Spatial Blend</p></td></tr><tr><td><p>混响</p></td><td><p>Reverb 效果（Audio Volume 中设置）</p></td><td><p>Audio Reverb Zone / Reverb Filter</p></td></tr></tbody></table></div><h2><span>术语双语表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>English</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>Particle System</td><td>粒子系统</td><td><p>大量微小粒子的集合，用于表现模糊、动态的视觉效果。</p></td></tr><tr><td>Emitter</td><td>发射器</td><td><p>定义粒子的生成规则、模拟逻辑和渲染方式。</p></td></tr><tr><td>Billboard</td><td>公告板</td><td><p>始终面向相机的二维 sprite，常用于火焰、烟雾。</p></td></tr><tr><td>Ribbon Particle</td><td>条带粒子</td><td><p>把相邻粒子连接成条带，用于刀光、拖尾。</p></td></tr><tr><td>Alpha Blending</td><td>Alpha 混合</td><td><p>按透明度混合源颜色与目标颜色，需要正确排序。</p></td></tr><tr><td>Compute Shader</td><td>计算着色器</td><td><p>GPU 上的通用并行计算程序，用于 GPU 粒子模拟。</p></td></tr><tr><td>PCM</td><td>脉冲编码调制</td><td><p>数字音频的标准编码方式：采样、量化、编码。</p></td></tr><tr><td>Nyquist-Shannon Theorem</td><td>奈奎斯特-香农采样定理</td><td><p>采样频率至少为信号最高频率的两倍才能无失真恢复。</p></td></tr><tr><td>Spatialization</td><td>空间化</td><td><p>把声音相对听者定向的技术，包括声像平移、声场、双耳音频。</p></td></tr><tr><td>Doppler Effect</td><td>多普勒效应</td><td><p>波源与观察者相对运动导致频率变化的现象。</p></td></tr></tbody></table></div><h2><span>课后练习</span></h2><div class="quiz"><p class="quiz-q"><span class="q-no">01</span><span><p>粒子系统由哪三层组成？发射器的三大职责是什么？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从粒子、发射器、系统三个层次回答。</p></p><p class="quiz-a"><p>三层：粒子（Particle）、发射器（Emitter）、粒子系统（Particle System）。发射器三大职责：① 指定生成规则（spawn rules）；② 指定模拟逻辑（simulation logic）；③ 描述如何渲染粒子（how to render particles）。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">02</span><span><p>为什么半透明粒子需要排序？全局排序与层级排序各有什么优缺点？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从 Alpha 混合公式出发。</p></p><p class="quiz-a"><p>Alpha 混合结果依赖绘制顺序，未排序会导致远近粒子混合错误。全局排序对所有粒子按距离统一排序，结果最准确，但性能开销大；层级排序按系统→发射器→粒子逐层排序，性能较好，但跨发射器的粒子遮挡关系可能不准确。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">03</span><span><p>写出等功率声像平移的左右增益公式（设声像位置 x∈[0,1]），并说明为什么它比线性平移好。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>使用正弦/余弦。</p></p><p class="quiz-a"><p>g_L = cos(πx/2)，g_R = sin(πx/2)。因为人耳感知响度与功率成正比，功率等于振幅平方，线性平移在中间位置功率下降，听起来变轻；等功率平移保持 g_L² + g_R² = 1，功率恒定，听感更自然。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">04</span><span><p>简述 GPU 粒子的帧流程（从初始化到交换列表）。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>参考粒子池、死列表、活列表。</p></p><p class="quiz-a"><p>① 初始化粒子池，所有槽位为 DEAD；② 生成粒子：调度计算着色器线程，原子访问死列表和活列表；③ 模拟：调度 alive_count_0 个线程，更新位置、速度、碰撞，写回粒子池，并做视锥剔除；④ 排序：按距离对剔除后的活列表排序；⑤ 渲染粒子；⑥ 交换活列表，为下一帧准备。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">05</span><span><p>在 UE 或 Unity 中实现一个「火焰 + 烟雾」的粒子效果，你会如何组织发射器和渲染类型？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>考虑火焰和烟雾的不同特性。</p></p><p class="quiz-a"><p>火焰发射器：Billboard 粒子，颜色从亮黄渐变到暗红，大小随时间缩小，使用叠加混合（Additive）。烟雾发射器：Billboard 粒子，颜色为灰黑色，大小随时间增大，使用半透明混合（Translucent），并开启排序。两个发射器放在同一个粒子系统中，通过系统统一管理。</p></p></details></div><nav class="pager"><a class="cta prev" href="../GAMES104/104_L11.html"><span class="dir"><small>← 上一讲</small><b>L11 物理系统应用</b></span></a><a class="cta next" href="../GAMES104/104_L14.html"><span class="dir"><small>下一讲 →</small><b>L14 工具链</b></span></a></nav><footer class="page-foot"><span>本手册基于 GAMES104 课件整理，仅供个人学习使用。</span><span>课件版权归原作者与课程组所有。</span><span><a href="../index.html">手册首页</a> · <a href="../GAMES104/index.html">GAMES104 课程总览</a></span></footer></article></main></div><div class="reading-bar" id="reading-bar" aria-hidden="true"></div><div class="search-overlay" id="search-overlay"><div class="search-panel" role="dialog" aria-modal="true" aria-label="搜索手册"><div class="search-input-row"><span class="ico" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索知识点、术语、常见坑、讲次…" autocomplete="off" aria-label="搜索关键词"><kbd>Esc</kbd></div><div class="search-list" id="search-list"></div><div class="search-hint"><span>↑↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div></div></div><div class="lightbox" id="lightbox" aria-hidden="true"></div><script src="../assets/katex/katex.min.js"></script><script src="../assets/katex/contrib/auto-render.min.js"></script><script src="../assets/search-index.js"></script><script src="../assets/app.js"></script><script>document.addEventListener("DOMContentLoaded",function(){if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:false});});</script></body></html>

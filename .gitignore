@@ -1,0 +1,9 @@
+# 网站部署仓库：不包含 PDF / 打印版 / 原始 PNG
+pdf/
+print/
+assets/img/**/*.png
+
+# 系统与临时
+.DS_Store
+Thumbs.db
+*.log

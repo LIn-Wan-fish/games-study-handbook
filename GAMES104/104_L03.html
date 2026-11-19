@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-tone="2" data-root="../">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 3 讲：如何构建游戏世界 · GAMES 学习手册</title>
+<meta name="description" content="从“一切都是游戏对象”出发，用组件化、Tick 循环、事件机制和场景管理搭起游戏世界的骨架">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230066cc'/%3E%3Ctext x='16' y='22' font-family='-apple-system,Segoe UI,sans-serif' font-size='17' font-weight='800' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var t = q === 'light' || q === 'dark' ? q : localStorage.getItem('theme');
+    var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+</script>
+</head><div class="bg-aura" aria-hidden="true"></div><header class="topbar"><div class="topbar-left"><a class="nav-pill brand-pill" href="../index.html" aria-label="GAMES 学习手册首页"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-text"><b>GAMES 学习手册</b><small>计算机图形学 · 3A 游戏开发</small></span></a><span class="nav-pill crumb-pill"><a href="../index.html">首页</a> / <a href="../GAMES104/index.html">GAMES104</a> / <b>构建游戏世界</b></span></div><nav class="topbar-center seg-tabs" aria-label="课程切换"><a class="seg-tab" href="../GAMES101/index.html" data-tone="1"><span class="seg-code">GAMES101</span></a><a class="seg-tab active" href="../GAMES104/index.html" data-tone="2"><span class="seg-code">GAMES104</span></a><a class="seg-tab" href="../GAMES202/index.html" data-tone="3"><span class="seg-code">GAMES202</span></a><a class="seg-tab" href="../GAMES105/index.html" data-tone="4"><span class="seg-code">GAMES105</span></a></nav><div class="topbar-right"><button class="topbar-ctl search-btn" type="button" data-search-open aria-label="搜索知识点"><span class="s-ico" aria-hidden="true">⌕</span><span class="s-label">搜索</span><kbd>/</kbd></button><button class="topbar-ctl theme-btn" type="button" data-theme-toggle aria-label="切换主题"><span aria-hidden="true">◐</span><span class="t-label" data-theme-label>浅色</span></button><button class="topbar-ctl print-btn" type="button" data-print aria-label="打印本页"><span class="p-ico" aria-hidden="true">⎙</span><span class="p-label">打印</span></button><button class="topbar-ctl menu-btn" type="button" data-side-toggle aria-label="打开目录" aria-expanded="false">☰</button></div></header><div class="shell-body"><aside class="sidebar material" aria-label="目录"><div class="side-block"><p class="sidebar-h">本讲目录</p><ul class="toc page-toc"><li><a href="#s1">1. 游戏世界由什么组成：从无人机到空气墙</a></li><li><a href="#s2">2. 怎么描述一个游戏对象：属性、行为与继承的困境</a></li><li><a href="#s3">3. 组件化：用“拼装”代替“分类”</a></li><li><a href="#s4">4. 让世界动起来：Tick 循环的两种组织方式</a></li><li><a href="#s5">5. 对象之间怎么交互：事件机制</a></li><li><a href="#s6">6. 怎么管理这么多对象：场景与空间查询</a></li><li><a href="#s7">7. 本讲收束：五句话记住游戏世界的骨架</a></li></ul></div><div class="side-block"><p class="sidebar-h">全部讲次<span class="count">20 讲</span></p><ul class="toc lecture-toc"><li><a href="../GAMES104/index.html"><span class="lec-no">◎</span><span>课程总览</span></a></li><li><a class="" href="../GAMES104/104_L01.html"><span class="lec-no">L01</span><span>游戏引擎导论</span></a></li><li><a class="" href="../GAMES104/104_L02.html"><span class="lec-no">L02</span><span>引擎分层架构</span></a></li><li><a class="active" href="../GAMES104/104_L03.html"><span class="lec-no">L03</span><span>构建游戏世界</span></a></li><li><a class="" href="../GAMES104/104_L04.html"><span class="lec-no">L04</span><span>渲染总览</span></a></li><li><a class="" href="../GAMES104/104_L05.html"><span class="lec-no">L05</span><span>渲染：光照材质着色器</span></a></li><li><a class="" href="../GAMES104/104_L06.html"><span class="lec-no">L06</span><span>渲染：地形/天空/云</span></a></li><li><a class="" href="../GAMES104/104_L07.html"><span class="lec-no">L07</span><span>渲染管线与后处理</span></a></li><li><a class="" href="../GAMES104/104_L08.html"><span class="lec-no">L08</span><span>动画系统</span></a></li><li><a class="" href="../GAMES104/104_L09.html"><span class="lec-no">L09</span><span>动画系统进阶</span></a></li><li><a class="" href="../GAMES104/104_L10.html"><span class="lec-no">L10</span><span>物理系统</span></a></li><li><a class="" href="../GAMES104/104_L11.html"><span class="lec-no">L11</span><span>物理系统应用</span></a></li><li><a class="" href="../GAMES104/104_L12.html"><span class="lec-no">L12</span><span>粒子与音频</span></a></li><li><a class="" href="../GAMES104/104_L14.html"><span class="lec-no">L14</span><span>工具链</span></a></li><li><a class="" href="../GAMES104/104_L15.html"><span class="lec-no">L15</span><span>玩法系统 Gameplay</span></a></li><li><a class="" href="../GAMES104/104_L16.html"><span class="lec-no">L16</span><span>游戏 AI 基础</span></a></li><li><a class="" href="../GAMES104/104_L17.html"><span class="lec-no">L17</span><span>进阶 AI 与机器学习</span></a></li><li><a class="" href="../GAMES104/104_L18.html"><span class="lec-no">L18</span><span>在线游戏架构</span></a></li><li><a class="" href="../GAMES104/104_L19.html"><span class="lec-no">L19</span><span>在线游戏架构（下）</span></a></li><li><a class="" href="../GAMES104/104_L20.html"><span class="lec-no">L20</span><span>面向数据编程与 Job Syst</span></a></li><li><a class="" href="../GAMES104/104_L21.html"><span class="lec-no">L21</span><span>动态全局光照与 Lumen</span></a></li></ul></div><div class="side-foot">基于 GAMES104 课件整理 · 仅供个人学习<br><a href="../index.html">← 返回手册首页</a></div></aside><div class="side-scrim"></div><main class="page"><article class="article"><header class="ch-head"><span class="ch-course">GAMES104 · 现代游戏引擎：理论、实践与架构</span><h1 class="ch-title">第 3 讲：如何构建游戏世界</h1><p class="ch-sub">从“一切都是游戏对象”出发，用组件化、Tick 循环、事件机制和场景管理搭起游戏世界的骨架</p><div class="ch-meta"><span class="chip">课件 <b>41</b> 页</span><span class="chip">精讲 <b>7</b> 节</span><span class="chip">术语 <b>10</b> 条</span><span class="chip">练习 <b>5</b> 道</span></div></header><div class="objectives"><div class="callout key"><p class="callout-h">◆ 学完这一讲，你应该能</p><ul><li><p>能说清游戏世界由哪些类型的对象组成（静态物体、环境、逻辑对象等）</p></li><li><p>能用组件化（Component）思想描述一个游戏对象，并解释它比继承好在哪里</p></li><li><p>能对比基于对象与基于组件的 Tick 循环，说出后者的性能优势</p></li><li><p>能解释事件机制如何解耦对象间的交互</p></li><li><p>能列举至少三种场景管理中的空间分割/查询结构，并说明其适用场景</p></li></ul></div></div><div class="keybox"><p class="keybox-h">核心结论速记</p><ol class="keybox-list"><li><p>游戏世界里的一切都是游戏对象（Game Object）</p></li><li><p>游戏对象用“属性 + 行为”描述，但用继承分类会很快遇到“分类不完美”的问题</p></li><li><p>组件化（Component）用组合代替继承，把 Transform、Model、Physics、AI 等拆成可插拔的部件</p></li><li><p>游戏对象的状态在 Tick 循环中更新；按组件组织 Tick 比按对象组织更高效（可并行、缓存友好）</p></li><li><p>对象间通过事件（Event）机制交互，发送与处理解耦，避免硬编码耦合</p></li><li><p>游戏对象由场景（Scene）统一管理，借助网格、四叉树/八叉树、BVH、BSP、场景图等空间结构加速查询</p></li><li><p>商业引擎（UE/Unity）的 GameObject/Entity + Component 体系正是这一讲的工程实现</p></li></ol></div><section class="sec" id="s1"><h2><span class="h2-no">01</span><span>1. 游戏世界由什么组成：从无人机到空气墙</span></h2><div class="sec-body"><p>这一讲要回答一个很朴素的问题：<strong>游戏世界到底由什么构成？</strong> 课件先给出一张分层图（Tool Layer、Function Layer、Resource Layer、Core Layer、Platform Layer），然后从最上层的“世界内容”切入。</p>
+<p>把镜头拉近，一个典型的战场场景里有：</p>
+<ul>
+<li><strong>静态游戏对象（Static Game Objects）</strong>：无人机、防空导弹、士兵、火炮、坦克；还有棚屋、木屋、石头、瞭望塔、箱子。它们有形状、位置，但不一定每帧都在动。</li>
+<li><strong>环境（Environments）</strong>：天空（Sky）、植被（Vegetation）、地形（Terrain）。它们往往体量巨大、需要专门的数据组织方式（比如地形高度图、植被实例化）。</li>
+<li><strong>其他游戏对象（Other Game Objects）</strong>：标尺、导航网格（Navigation mesh）、空气墙（Air wall）、触发区域（Trigger Area）。这些对象<strong>没有可见的网格</strong>，但参与游戏逻辑——导航网格决定 AI 怎么走，空气墙挡住玩家，触发区域在玩家进入时发事件。</li>
+</ul>
+<p>于是课件给出了一句贯穿全讲的话：<strong>Everything is a Game Object（一切都是游戏对象）</strong>。</p>
+<p>这句话的工程含义是：引擎需要一个统一的“对象”抽象，让可见的坦克和不可见的触发器用同一套机制被创建、更新、查询、销毁。否则每加一种新东西就要改一次引擎核心，项目一大就失控。</p>
+<p>注意“统一抽象”不等于“所有对象一样重”。商业引擎里通常有轻量对象（UE 的 Actor、Unity 的 GameObject）和更轻量的纯数据/组件之分，但对外都表现为“场景里的一个对象”。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0002.webp" alt="图注：静态游戏对象示例——无人机、防空导弹、士兵、火炮、坦克，说明世界首先由大量可见实体构成。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.3</span><span>图注：静态游戏对象示例——无人机、防空导弹、士兵、火炮、坦克，说明世界首先由大量可见实体构成。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0005.webp" alt="图注：其他游戏对象——标尺、导航网格、空气墙、触发区域，它们不可见但参与逻辑，是“一切都是游戏对象”的关键证据。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.6</span><span>图注：其他游戏对象——标尺、导航网格、空气墙、触发区域，它们不可见但参与逻辑，是“一切都是游戏对象”的关键证据。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>把“游戏对象”等同于“可见模型” → 导航网格、触发器这类逻辑对象被漏掉 → 设计对象系统时要先列出所有需要被管理的实体类型，而不只是美术资产。</p></li><li><p>环境（地形/植被/天空）直接当普通对象逐個管理 → 数量爆炸、性能崩溃 → 地形用高度图、植被用实例化/散布系统，单独走专门管线。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：场景里的一切可放置实体都是 Actor，包括不可见的 Trigger Volume、NavMeshBoundsVolume；环境地形是 Landscape，植被是 Foliage。</p></li><li><p>Unity：对应 GameObject；导航用 NavMesh，触发区域用 Collider 勾选 Is Trigger。</p></li></ul></div></section><section class="sec" id="s2"><h2><span class="h2-no">02</span><span>2. 怎么描述一个游戏对象：属性、行为与继承的困境</span></h2><div class="sec-body"><p>课件用一个具体需求开场：“我想要一架无人机！”那现实中我们怎么描述一架无人机？</p>
+<ul>
+<li><strong>形状</strong>（属性）</li>
+<li><strong>位置</strong>（属性）</li>
+<li><strong>移动</strong>（行为）</li>
+<li><strong>电池容量</strong>（属性）</li>
+<li>……</li>
+</ul>
+<p>归纳起来就是：<strong>属性（Property）+ 行为（Behavior）</strong>。于是最直觉的写法是定义一个类：</p>
+<pre><code>class Drone {
+    Position position;
+    Health health;
+    Battery battery;
+    void Move();
+    void Scout();
+}
+</code></pre>
+<p>现在需求升级：要一架<strong>武装无人机（Armed Drone）</strong>。它和普通无人机相比，属性多了弹药（ammo），行为多了开火（fire）。用继承（Inheritance）很自然：<code>ArmedDrone extends Drone</code>，UML 类图上一根箭头就搞定。</p>
+<p>但课件紧接着泼了一盆冷水：<strong>游戏世界里没有完美的分类（No Perfect Classification）</strong>。设想你要给“飞行器（Aircraft）”分类：直升机、无人机、战斗机、飞艇……按动力分？按用途分？按是否载人分？每一种分法都会在某个新需求上崩掉。更糟的是多重继承会带来菱形继承、状态爆炸。</p>
+<p>这不是设计者不够聪明，而是<strong>现实世界的分类本来就是多维的、模糊的</strong>，而继承是一棵单根的树，树装不下多维分类。</p>
+<p>课件的解法是下一节的<strong>组件化（Component）</strong>：不再问“它是什么”，而是问“它由哪些部件组成”。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0008.webp" alt="图注：用“属性 + 行为”描述现实中的无人机——形状、位置、移动、电池容量，这是面向对象建模的起点。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.9</span><span>图注：用“属性 + 行为”描述现实中的无人机——形状、位置、移动、电池容量，这是面向对象建模的起点。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0012.webp" alt="图注：“游戏世界没有完美的分类”——飞行器分类的困境，说明单继承树无法覆盖多维分类，为组件化埋下伏笔。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.13</span><span>图注：“游戏世界没有完美的分类”——飞行器分类的困境，说明单继承树无法覆盖多维分类，为组件化埋下伏笔。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>一上来就用继承建模所有对象 → 需求一变就要改类层次，牵一发动全身 → 先识别“可复用的能力”，优先考虑组合。</p></li><li><p>把行为写成对象内部的大 switch/if-else → 新增类型要改旧代码，违反开闭原则 → 用组件或数据驱动的方式扩展。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：早期蓝图/ C++ 里也有继承（AActor → APawn → ACharacter），但引擎同时提供组件来横向扩展能力，避免继承树过深。</p></li><li><p>Unity：GameObject 本身几乎没有行为，行为都挂在 Component 上，这是“组合优于继承”的直接体现。</p></li></ul></div></section><section class="sec" id="s3"><h2><span class="h2-no">03</span><span>3. 组件化：用“拼装”代替“分类”</span></h2><div class="sec-body"><p>课件用两个现实类比讲组件化（Component）：</p>
+<ul>
+<li><strong>工程机械</strong>：挖掘机、装载机、压路机，底盘、动臂、铲斗、驾驶舱等部件可以互换组合。</li>
+<li><strong>枪械</strong>：HK416、M4、AR 系列，枪管、护木、弹匣、瞄具按接口组合。</li>
+</ul>
+<p>对应到无人机，它由这些组件构成：<strong>Transform（变换）、Motor（动力）、Model（模型）、Animation（动画）、Physics（物理）、AI</strong>……每个组件只负责一件事。</p>
+<p>代码上通常有一个组件基类：</p>
+<pre><code class="language-cpp">class Component {
+public:
+    virtual void Tick(float dt) = 0;
+    virtual ~Component() = default;
+};
+
+class Transform : public Component { /* 位置、旋转、缩放 */ };
+class Physics   : public Component { /* 刚体、碰撞 */ };
+class Animation : public Component { /* 动画状态机 */ };
+</code></pre>
+<p>游戏对象本身只持有一组组件指针，按需增删。</p>
+<p>再看无人机 vs 武装无人机：两者的 Transform、Model、Animation、Motor、Physics <strong>完全相同</strong>，唯一区别是武装无人机多了一个 <code>AI ≠ AI Combat</code> 的组件（战斗 AI）。用组件化，你不需要复制整个类，只需要“多挂一个组件”。</p>
+<p>课件还展示了商业引擎里的组件面板（Components in Commercial Engines），说明这不是教学玩具，而是 UE/Unity 的真实工作方式。</p>
+<p>组件化的代价是：对象的行为分散在多个组件里，调试时要在组件之间跳转；组件间通信需要约定（下一节的事件机制就是为此服务的）。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0015.webp" alt="图注：无人机的组件构成——Transform、Motor、Model、Animation、Physics、AI，每个组件职责单一。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.16</span><span>图注：无人机的组件构成——Transform、Motor、Model、Animation、Physics、AI，每个组件职责单一。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0018.webp" alt="图注：商业引擎中的组件面板，说明组件化是工业级做法而非教学简化。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.19</span><span>图注：商业引擎中的组件面板，说明组件化是工业级做法而非教学简化。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>组件之间直接互相持有指针并随意调用 → 耦合重新出现，组件失去可插拔性 → 用事件或明确的依赖注入来通信。</p></li><li><p>把所有逻辑塞进一个“万能组件” → 退化成继承式大类 → 按单一职责拆分，一个组件只做一件事。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：UActorComponent / USceneComponent，Actor 通过 AddComponent 挂载；Transform 由 RootComponent 统一管理。</p></li><li><p>Unity：GameObject.AddComponent&lt;T&gt;()，Transform 是每个 GameObject 必有的组件。</p></li></ul></div><div class="code-wrap"><p class="code-cap">组件基类与对象持有组件的伪代码（cpp）</p><pre class="code"><code class="lang-cpp">class GameObject {
+    std::vector&lt;Component*&gt; components;
+public:
+    template&lt;typename T&gt; T* AddComponent();
+    template&lt;typename T&gt; T* GetComponent();
+    void Tick(float dt) {
+        for (auto* c : components) c-&gt;Tick(dt);
+    }
+};</code></pre></div></section><section class="sec" id="s4"><h2><span class="h2-no">04</span><span>4. 让世界动起来：Tick 循环的两种组织方式</span></h2><div class="sec-body"><p>对象描述好了，接下来要<strong>每帧更新</strong>它们的状态，这就是 Tick（也叫 Update）。课件对比了两种组织方式。</p>
+<p><strong>基于对象的 Tick（Object-based Tick）</strong>：每个游戏对象内部依次调用自己的各个组件。</p>
+<pre><code>GO1: Motor → Controller → Animation
+GO2: Motor → Controller → Animation
+...
+</code></pre>
+<p>优点很直观：<strong>简单、直观、容易调试</strong>——一个对象的逻辑都在一处，断点一打就能跟。</p>
+<p><strong>基于组件的 Tick（Component-based Tick）</strong>：把所有对象的同类组件收集到一起，按组件类型批量更新。</p>
+<pre><code>Motor 阶段：GO1, GO2, GO3, GO4 ...
+Controller 阶段：GO1, GO2, GO3, GO4 ...
+Animation 阶段：...
+</code></pre>
+<p>课件给出的优势是：<strong>可并行化处理（Parallelized processing）</strong> 和 <strong>减少缓存未命中（Reduced cache miss）</strong>。</p>
+<p>为什么？因为同一类组件的数据在内存里连续存放，CPU 顺序访问时缓存命中率高；而按对象遍历时，每跳到一个对象就要换一块内存，缓存频繁失效。并行化也更容易：同一阶段内不同对象互不依赖，可以分到多个线程。</p>
+<p>代价是：跨组件的依赖顺序需要显式安排（比如物理必须在动画之前），调试时一个对象的逻辑分散在多个阶段。</p>
+<p>这就是现代引擎 ECS（Entity-Component-System）思想的雏形：数据按组件类型连续存储，系统按阶段批量处理。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0022.webp" alt="图注：基于组件的 Tick——按 Motor、Controller、Animation 等组件类型分批更新，便于并行与缓存优化。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.23</span><span>图注：基于组件的 Tick——按 Motor、Controller、Animation 等组件类型分批更新，便于并行与缓存优化。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>组件 Tick 顺序没定义 → 物理还没算完动画就采样，出现抖动/穿模 → 在引擎里显式规定阶段顺序（如物理→动画→渲染）。</p></li><li><p>以为组件化 Tick 一定更快 → 对象很少时按对象遍历反而更简单 → 小规模用直观写法，大规模再上按组件批处理。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Tick 由 Actor 的 PrimaryActorTick 驱动，组件也可独立 Tick；底层有 Tick 函数注册与分组机制。</p></li><li><p>Unity：Update / FixedUpdate / LateUpdate 就是不同阶段的 Tick；DOTS/ECS 则是彻底的按组件批处理。</p></li></ul></div></section><section class="sec" id="s5"><h2><span class="h2-no">05</span><span>5. 对象之间怎么交互：事件机制</span></h2><div class="sec-body"><p>世界活了，但对象不能各玩各的。课件抛出一个具体问题：<strong>“怎么让一颗弹药在游戏里爆炸？”</strong></p>
+<p>最直接的写法是硬编码（Hardcode）：弹药爆炸时，依次调用士兵、直升机、石头、坦克的受伤逻辑。</p>
+<pre><code>void OnExplode() {
+    soldier.TakeDamage(...);
+    helicopter.TakeDamage(...);
+    stone.TakeDamage(...);
+    tank.TakeDamage(...);
+}
+</code></pre>
+<p>问题很明显：每新增一种可被炸的对象，就要改爆炸代码；爆炸逻辑和具体对象死死绑在一起。</p>
+<p>课件的解法是<strong>事件（Event）机制</strong>：消息的发送与处理解耦。</p>
+<ul>
+<li>爆炸发生时，只<strong>发送</strong>一个“爆炸事件”（携带位置、半径、伤害等参数）。</li>
+<li>感兴趣的对象<strong>订阅</strong>并<strong>处理</strong>这个事件：士兵收到后扣血，石头收到后碎裂，直升机收到后坠落。</li>
+<li>发送方不需要知道谁在听，接收方也不需要知道谁发的。</li>
+</ul>
+<p>这就是“解耦事件发送与处理（Decoupling event sending and handling）”。</p>
+<p>工程上要注意：事件是异步/延迟的，同一帧内的事件顺序需要定义；事件过多会带来性能开销和调试困难（“谁触发了这个事件？”），所以商业引擎通常提供事件调试工具。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0026.webp" alt="图注：事件机制——爆炸只负责发消息，士兵、直升机、石头、坦克各自订阅处理，发送与处理解耦。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.27</span><span>图注：事件机制——爆炸只负责发消息，士兵、直升机、石头、坦克各自订阅处理，发送与处理解耦。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>事件里传裸指针/引用 → 接收方处理时对象已销毁，野指针崩溃 → 传 ID 或弱引用，处理前校验有效性。</p></li><li><p>事件链过长且无日志 → 出问题不知道谁触发 → 给事件加来源标记和调试面板。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Delegate（委托）与 Event Dispatcher，蓝图里用 Event Dispatcher 做对象间广播。</p></li><li><p>Unity：C# event / UnityEvent，或 SendMessage（不推荐，性能差且隐式）。</p></li></ul></div></section><section class="sec" id="s6"><h2><span class="h2-no">06</span><span>6. 怎么管理这么多对象：场景与空间查询</span></h2><div class="sec-body"><p>对象多了就要<strong>管理</strong>。课件给出的容器是<strong>场景（Scene）</strong>：游戏对象都在场景里被统一管理。</p>
+<p>管理要解决的核心问题是<strong>查询</strong>：</p>
+<ul>
+<li>按唯一 ID 查（精确查找某个对象）。</li>
+<li>按位置查（“我周围有哪些对象？”——这是最常用的）。</li>
+</ul>
+<p>如果场景里有成千上万个对象，逐个遍历就是<strong>大海捞针（A needle in a haystack）</strong>。课件用“不划分 vs 按网格划分”的对比说明：把空间切成格子，查询时只检查附近格子，复杂度大幅下降。</p>
+<p>进一步，课件介绍了两类改进：</p>
+<ol>
+<li><strong>按对象簇分割（Segmented space by object clusters）</strong>：不是均匀切格子，而是按对象聚集情况划分，稀疏区域格子大、密集区域格子小。</li>
+<li><strong>层次化分割（Hierarchical segmentation）</strong>：像“中国→浙江→杭州”一样逐层缩小范围，典型结构是<strong>四叉树（Quadtree，2D）/ 八叉树（Octree，3D）</strong>。查询时从根节点往下走，只进入与查询范围相交的节点。</li>
+</ol>
+<p>课件最后列出常见的<strong>空间数据结构（Spatial Data Structures）</strong>：</p>
+<ul>
+<li><strong>BVH（Bounding Volume Hierarchies，包围体层次）</strong>：按对象包围盒自底向上合并成树，常用于射线检测、碰撞粗筛。</li>
+<li><strong>BSP（Binary Space Partitioning，二叉空间分割）</strong>：用平面递归分割空间，早期用于室内可见性判断。</li>
+<li><strong>Octree（八叉树）</strong>：三维均匀层次分割。</li>
+<li><strong>Scene Graph（场景图）</strong>：按父子关系组织对象，变换沿层级累积，渲染和动画常用。</li>
+</ul>
+<p>选型要看场景特征：动态对象多用 BVH/八叉树，静态室内可用 BSP，层级变换用场景图。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0030.webp" alt="图注：不划分 vs 按网格划分——说明空间分割如何把“大海捞针”变成“只查附近格子”。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.31</span><span>图注：不划分 vs 按网格划分——说明空间分割如何把“大海捞针”变成“只查附近格子”。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0033.webp" alt="图注：常见空间数据结构——BVH、BSP、Octree、Scene Graph，各有适用场景。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.34</span><span>图注：常见空间数据结构——BVH、BSP、Octree、Scene Graph，各有适用场景。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>所有查询都遍历全场景 → 对象一多帧率暴跌 → 引入空间结构，按位置查询走索引。</p></li><li><p>对象移动后不更新空间索引 → 查询结果过期，出现“打不中” → 移动时同步更新所在节点（或延迟重建）。</p></li><li><p>场景图父子变换累积错误 → 子物体位置漂移 → 确保每帧从根节点重新计算世界变换，或使用脏标记。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：World 管理所有 Actor，提供空间查询接口（OverlapMultiByChannel 等），底层用空间索引加速。</p></li><li><p>Unity：Scene 管理 GameObject，Physics.OverlapSphere 等查询依赖物理场景的空间划分；场景图即 Transform 父子层级。</p></li></ul></div></section><section class="sec" id="s7"><h2><span class="h2-no">07</span><span>7. 本讲收束：五句话记住游戏世界的骨架</span></h2><div class="sec-body"><p>课件最后用五条 Takeaway 收束全讲，这也是整讲的骨架：</p>
+<ol>
+<li><strong>一切都是对象（Everything is an object）</strong>——可见的、不可见的，统一抽象。</li>
+<li><strong>游戏对象用组件化方式描述（Game object could be described in the component-based way）</strong>——组合优于继承。</li>
+<li><strong>游戏对象的状态在 Tick 循环中更新（States of game objects are updated in tick loops）</strong>——按组件组织更高效。</li>
+<li><strong>游戏对象通过事件机制交互（Game objects interact with each other via event mechanism）</strong>——发送与处理解耦。</li>
+<li><strong>游戏对象在场景中被高效策略管理（Game objects are managed in a scene with efficient strategies）</strong>——空间结构加速查询。</li>
+</ol>
+<p>课件还补充了两张工程细节图：<strong>组件依赖（Component Dependencies）</strong> 与 <strong>立即事件发送与否（Immediate Event Sending or not）</strong>，提醒我们组件之间、事件之间都有顺序与依赖问题，不是“挂上就完事”。</p>
+<p>最后课件展示了“第一版动画系统（First version of animation system）”，作为下一讲的引子——对象和组件搭好了，接下来要讲它们怎么动得好看。</p>
+<p>把这一讲放回引擎分层图：我们讲的是 <strong>Function Layer（功能层）</strong> 的世界组织方式，它向下依赖 Resource/Core/Platform 层，向上支撑 Tool 层。理解了这一层，你再看 UE 的 Actor-Component 体系或 Unity 的 GameObject-Component 体系，就不会觉得是一堆零散 API，而是一套有清晰动机的设计。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L03/p0035.webp" alt="图注：组件依赖与事件是否立即发送——提醒组件与事件都有顺序和依赖，工程上要显式管理。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.36</span><span>图注：组件依赖与事件是否立即发送——提醒组件与事件都有顺序和依赖，工程上要显式管理。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>把五条 Takeaway 当成五个孤立知识点 → 实际它们是一条链：对象→组件→Tick→事件→场景管理 → 复习时按这条链串起来记。</p></li><li><p>忽略组件依赖顺序 → 运行时出现“有时对有时错”的随机 bug → 明确依赖图，固定更新顺序。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Actor-Component 体系 + World + Delegate，正好对应本讲五条。</p></li><li><p>Unity：GameObject-Component + Scene + C# event/UnityEvent，同样一一对应。</p></li></ul></div></section><h2><span>引擎对照表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>概念 / 效果</th><th>Unreal Engine</th><th>Unity</th></tr></thead><tbody><tr><td><p>游戏对象</p></td><td><p>Actor（可放置实体，含不可见 Trigger）</p></td><td><p>GameObject</p></td></tr><tr><td><p>组件</p></td><td><p>UActorComponent / USceneComponent，AddComponent 挂载</p></td><td><p>Component，AddComponent&lt;T&gt;() 挂载</p></td></tr><tr><td><p>变换</p></td><td><p>RootComponent 的 Transform</p></td><td><p>每个 GameObject 必有的 Transform</p></td></tr><tr><td><p>每帧更新</p></td><td><p>Actor/Component 的 Tick，可设 TickGroup</p></td><td><p>Update / FixedUpdate / LateUpdate</p></td></tr><tr><td><p>事件</p></td><td><p>Delegate、Event Dispatcher</p></td><td><p>C# event、UnityEvent</p></td></tr><tr><td><p>场景与空间查询</p></td><td><p>World + OverlapMultiByChannel 等空间查询</p></td><td><p>Scene + Physics.OverlapSphere 等</p></td></tr></tbody></table></div><h2><span>术语双语表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>English</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>Game Object</td><td>游戏对象</td><td><p>游戏世界中的基本实体，可见或不可见，统一抽象</p></td></tr><tr><td>Component</td><td>组件</td><td><p>可插拔的功能部件，用组合代替继承描述对象</p></td></tr><tr><td>Tick</td><td>帧更新</td><td><p>每帧调用以更新对象状态，可按对象或按组件组织</p></td></tr><tr><td>Event</td><td>事件</td><td><p>对象间消息机制，发送与处理解耦</p></td></tr><tr><td>Scene</td><td>场景</td><td><p>统一管理游戏对象的容器</p></td></tr><tr><td>Quadtree / Octree</td><td>四叉树 / 八叉树</td><td><p>层次化空间分割结构，加速按位置查询</p></td></tr><tr><td>BVH</td><td>包围体层次</td><td><p>按包围盒合并成树，用于射线检测与碰撞粗筛</p></td></tr><tr><td>BSP</td><td>二叉空间分割</td><td><p>用平面递归分割空间，早期用于室内可见性</p></td></tr><tr><td>Scene Graph</td><td>场景图</td><td><p>按父子关系组织对象，变换沿层级累积</p></td></tr><tr><td>ECS</td><td>实体-组件-系统</td><td><p>按组件类型连续存储、系统批量处理的架构，本讲组件化 Tick 的延伸</p></td></tr></tbody></table></div><h2><span>课后练习</span></h2><div class="quiz"><p class="quiz-q"><span class="q-no">01</span><span><p>为什么课件说“游戏世界没有完美的分类”？请举一个继承会崩掉的例子。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从多维分类角度想。</p></p><p class="quiz-a"><p>因为现实对象可按多个维度分类（动力、用途、是否载人），而继承是单根树，装不下多维。例如“飞行器”按动力分有螺旋桨/喷气，按用途分有侦察/战斗，交叉组合会产生大量子类，新增一个维度就要改整棵树。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">02</span><span><p>对比基于对象与基于组件的 Tick，各写一条优点和一条代价。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从调试与性能角度。</p></p><p class="quiz-a"><p>基于对象：优点是简单直观、易调试（一个对象逻辑集中）；代价是缓存不友好、难并行。基于组件：优点是同类数据连续、缓存命中高、可并行；代价是跨组件依赖顺序需显式管理、调试时逻辑分散。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">03</span><span><p>爆炸事件机制相比硬编码好在哪里？工程上要注意什么？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>解耦与生命周期。</p></p><p class="quiz-a"><p>好在发送方只发事件、不关心谁处理，新增可被炸对象无需改爆炸代码。注意：事件里不要传裸指针（对象可能已销毁），要传 ID 或弱引用并校验；事件顺序要定义；要有调试手段追踪来源。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">04</span><span><p>场景里有 10 万个对象，要频繁查询“玩家周围 50 米内有哪些对象”，你会选什么空间结构？为什么？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>动态对象、范围查询。</p></p><p class="quiz-a"><p>选八叉树或 BVH（动态对象多时 BVH 更常用）。它们能把查询范围逐层缩小，只检查与范围相交的节点，避免遍历全部对象；网格划分也可但稀疏区域浪费，层次结构更均衡。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">05</span><span><p>在 UE 或 Unity 里，找一个你熟悉的 Actor/GameObject，列出它挂载的组件，并说明如果不用组件化、改用继承要写多少个类。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>打开编辑器看组件面板。</p></p><p class="quiz-a"><p>例如 UE 的 Character：含 Transform、SkeletalMesh、CharacterMovement、CapsuleCollision、AnimInstance 等。若用继承，需要为“会走的”“有模型的”“有碰撞的”等每种组合建类，组合数爆炸；组件化只需按需挂载。答案因对象而异，关键是能说出组件清单并解释组合优势。</p></p></details></div><nav class="pager"><a class="cta prev" href="../GAMES104/104_L02.html"><span class="dir"><small>← 上一讲</small><b>L02 引擎分层架构</b></span></a><a class="cta next" href="../GAMES104/104_L04.html"><span class="dir"><small>下一讲 →</small><b>L04 渲染总览</b></span></a></nav><footer class="page-foot"><span>本手册基于 GAMES104 课件整理，仅供个人学习使用。</span><span>课件版权归原作者与课程组所有。</span><span><a href="../index.html">手册首页</a> · <a href="../GAMES104/index.html">GAMES104 课程总览</a></span></footer></article></main></div><div class="reading-bar" id="reading-bar" aria-hidden="true"></div><div class="search-overlay" id="search-overlay"><div class="search-panel" role="dialog" aria-modal="true" aria-label="搜索手册"><div class="search-input-row"><span class="ico" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索知识点、术语、常见坑、讲次…" autocomplete="off" aria-label="搜索关键词"><kbd>Esc</kbd></div><div class="search-list" id="search-list"></div><div class="search-hint"><span>↑↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div></div></div><div class="lightbox" id="lightbox" aria-hidden="true"></div><script src="../assets/katex/katex.min.js"></script><script src="../assets/katex/contrib/auto-render.min.js"></script><script src="../assets/search-index.js"></script><script src="../assets/app.js"></script><script>document.addEventListener("DOMContentLoaded",function(){if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:false});});</script></body></html>

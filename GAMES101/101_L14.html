@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-tone="1" data-root="../">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 14 讲：光线追踪加速与辐射度量学基础 · GAMES 学习手册</title>
+<meta name="description" content="用包围盒加速光线求交，并引入物理正确的光照度量单位">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230066cc'/%3E%3Ctext x='16' y='22' font-family='-apple-system,Segoe UI,sans-serif' font-size='17' font-weight='800' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var t = q === 'light' || q === 'dark' ? q : localStorage.getItem('theme');
+    var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+</script>
+</head><div class="bg-aura" aria-hidden="true"></div><header class="topbar"><div class="topbar-left"><a class="nav-pill brand-pill" href="../index.html" aria-label="GAMES 学习手册首页"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-text"><b>GAMES 学习手册</b><small>计算机图形学 · 3A 游戏开发</small></span></a><span class="nav-pill crumb-pill"><a href="../index.html">首页</a> / <a href="../GAMES101/index.html">GAMES101</a> / <b>加速结构与辐射度量</b></span></div><nav class="topbar-center seg-tabs" aria-label="课程切换"><a class="seg-tab active" href="../GAMES101/index.html" data-tone="1"><span class="seg-code">GAMES101</span></a><a class="seg-tab" href="../GAMES104/index.html" data-tone="2"><span class="seg-code">GAMES104</span></a><a class="seg-tab" href="../GAMES202/index.html" data-tone="3"><span class="seg-code">GAMES202</span></a><a class="seg-tab" href="../GAMES105/index.html" data-tone="4"><span class="seg-code">GAMES105</span></a></nav><div class="topbar-right"><button class="topbar-ctl search-btn" type="button" data-search-open aria-label="搜索知识点"><span class="s-ico" aria-hidden="true">⌕</span><span class="s-label">搜索</span><kbd>/</kbd></button><button class="topbar-ctl theme-btn" type="button" data-theme-toggle aria-label="切换主题"><span aria-hidden="true">◐</span><span class="t-label" data-theme-label>浅色</span></button><button class="topbar-ctl print-btn" type="button" data-print aria-label="打印本页"><span class="p-ico" aria-hidden="true">⎙</span><span class="p-label">打印</span></button><button class="topbar-ctl menu-btn" type="button" data-side-toggle aria-label="打开目录" aria-expanded="false">☰</button></div></header><div class="shell-body"><aside class="sidebar material" aria-label="目录"><div class="side-block"><p class="sidebar-h">本讲目录</p><ul class="toc page-toc"><li><a href="#s1">1. 为什么需要加速结构：从暴力求交到包围盒</a></li><li><a href="#s2">2. 均匀网格：预处理与光线遍历</a></li><li><a href="#s3">3. 空间划分：KD-Tree 的构建与遍历</a></li><li><a href="#s4">4. 物体划分：BVH 的构建与遍历</a></li><li><a href="#s5">5. 空间划分 vs 物体划分：一张表看清区别</a></li><li><a href="#s6">6. 辐射度量学：为什么需要物理正确的光照单位</a></li><li><a href="#s7">7. 角度与立体角：从 2D 弧长到 3D 球面面积</a></li></ul></div><div class="side-block"><p class="sidebar-h">全部讲次<span class="count">22 讲</span></p><ul class="toc lecture-toc"><li><a href="../GAMES101/index.html"><span class="lec-no">◎</span><span>课程总览</span></a></li><li><a class="" href="../GAMES101/101_L01.html"><span class="lec-no">L01</span><span>课程总览</span></a></li><li><a class="" href="../GAMES101/101_L02.html"><span class="lec-no">L02</span><span>线性代数复习</span></a></li><li><a class="" href="../GAMES101/101_L03.html"><span class="lec-no">L03</span><span>2D 变换与齐次坐标</span></a></li><li><a class="" href="../GAMES101/101_L04.html"><span class="lec-no">L04</span><span>观测变换与投影</span></a></li><li><a class="" href="../GAMES101/101_L05.html"><span class="lec-no">L05</span><span>光栅化（一）三角形与采样</span></a></li><li><a class="" href="../GAMES101/101_L06.html"><span class="lec-no">L06</span><span>反走样与深度缓冲</span></a></li><li><a class="" href="../GAMES101/101_L07.html"><span class="lec-no">L07</span><span>着色（一）Blinn-Phong</span></a></li><li><a class="" href="../GAMES101/101_L08.html"><span class="lec-no">L08</span><span>着色（一）Blinn-Phong</span></a></li><li><a class="" href="../GAMES101/101_L09.html"><span class="lec-no">L09</span><span>纹理映射与重心坐标</span></a></li><li><a class="" href="../GAMES101/101_L10.html"><span class="lec-no">L10</span><span>几何（一）隐式与显式</span></a></li><li><a class="" href="../GAMES101/101_L11.html"><span class="lec-no">L11</span><span>贝塞尔曲线与曲面</span></a></li><li><a class="" href="../GAMES101/101_L12.html"><span class="lec-no">L12</span><span>几何处理与阴影</span></a></li><li><a class="" href="../GAMES101/101_L13.html"><span class="lec-no">L13</span><span>光线追踪（一）</span></a></li><li><a class="active" href="../GAMES101/101_L14.html"><span class="lec-no">L14</span><span>加速结构与辐射度量</span></a></li><li><a class="" href="../GAMES101/101_L15.html"><span class="lec-no">L15</span><span>光传输与渲染方程</span></a></li><li><a class="" href="../GAMES101/101_L16.html"><span class="lec-no">L16</span><span>路径追踪</span></a></li><li><a class="" href="../GAMES101/101_L17.html"><span class="lec-no">L17</span><span>材质与外观</span></a></li><li><a class="" href="../GAMES101/101_L18.html"><span class="lec-no">L18</span><span>高级渲染专题</span></a></li><li><a class="" href="../GAMES101/101_L19.html"><span class="lec-no">L19</span><span>相机与镜头</span></a></li><li><a class="" href="../GAMES101/101_L20.html"><span class="lec-no">L20</span><span>颜色与感知</span></a></li><li><a class="" href="../GAMES101/101_L21.html"><span class="lec-no">L21</span><span>动画</span></a></li><li><a class="" href="../GAMES101/101_L22.html"><span class="lec-no">L22</span><span>动画（续）单粒子与流体</span></a></li></ul></div><div class="side-foot">基于 GAMES101 课件整理 · 仅供个人学习<br><a href="../index.html">← 返回手册首页</a></div></aside><div class="side-scrim"></div><main class="page"><article class="article"><header class="ch-head"><span class="ch-course">GAMES101 · 现代计算机图形学入门</span><h1 class="ch-title">第 14 讲：光线追踪加速与辐射度量学基础</h1><p class="ch-sub">用包围盒加速光线求交，并引入物理正确的光照度量单位</p><div class="ch-meta"><span class="chip">课件 <b>54</b> 页</span><span class="chip">精讲 <b>7</b> 节</span><span class="chip">术语 <b>9</b> 条</span><span class="chip">练习 <b>5</b> 道</span></div></header><div class="objectives"><div class="callout key"><p class="callout-h">◆ 学完这一讲，你应该能</p><ul><li><p>理解均匀网格（Uniform Grids）的预处理与遍历流程，并能分析其适用与失效场景</p></li><li><p>掌握空间划分（KD-Tree）与物体划分（BVH）的核心区别，能手工构建小规模 BVH</p></li><li><p>能写出 BVH 遍历的递归伪代码，并解释其正确性</p></li><li><p>理解辐射度量学中能量、通量、强度、辐照度、辐亮度的定义与单位</p></li><li><p>能计算简单点光源的辐射强度，并解释立体角与微分立体角的关系</p></li></ul></div></div><div class="keybox"><p class="keybox-h">核心结论速记</p><ol class="keybox-list"><li><p>均匀网格加速光线求交：预处理建格、运行时按光线顺序遍历格子，适合均匀分布的大规模物体。</p></li><li><p>网格分辨率需权衡：太少没加速，太多遍历开销大；经验公式为 #cells = C * #objs，C ≈ 27（3D）。</p></li><li><p>空间划分（KD-Tree）将空间切成不重叠区域，一个物体可属于多个区域；物体划分（BVH）将物体集合分成不相交子集，包围盒可重叠。</p></li><li><p>BVH 构建：递归将物体集二分，每次重新计算包围盒，直到节点物体数足够少；划分策略常用最长轴 + 中位数分割。</p></li><li><p>BVH 遍历：若光线与节点包围盒不相交则返回；叶子节点测试所有物体；内部节点递归左右子树取最近交点。</p></li><li><p>辐射度量学提供物理正确的光照度量：辐射能量 Q [J]、辐射通量 Φ [W]、辐射强度 I [W/sr]、辐照度 E [W/m²]、辐亮度 L [W/(sr·m²)]。</p></li><li><p>立体角 Ω 是球面面积与半径平方之比，单位球面总立体角为 4π sr；微分立体角 dω = sinθ dθ dφ。</p></li><li><p>各向同性点光源的辐射强度 I = Φ / (4π)，即通量均匀分布在 4π 立体角上。</p></li></ol></div><section class="sec" id="s1"><h2><span class="h2-no">01</span><span>1. 为什么需要加速结构：从暴力求交到包围盒</span></h2><div class="sec-body"><p>上一讲我们实现了 Whitted 风格的光线追踪，但有一个致命问题：每条光线都要和场景中所有物体求交。假设场景有 100 万个三角形，每条光线做 100 万次求交，而每个像素可能发射多条光线，计算量会爆炸。</p>
+<p>加速的核心思想是<strong>用包围盒（Bounding Box）快速排除不可能相交的区域</strong>。轴对齐包围盒（AABB）与光线求交非常快，只需分别计算光线与三对平行平面的交点区间，再取交集。如果光线连包围盒都不碰，盒内的物体就完全不用测试。</p>
+<p>但只给整个场景加一个包围盒还不够——光线仍然要进入盒内逐个测试物体。我们需要<strong>层次化</strong>的加速结构：把空间或物体组织成树，让光线沿着树快速跳过无关区域。本讲介绍两类经典方案：<strong>均匀网格（Uniform Grids）</strong> 和 <strong>空间划分（Spatial Partitions）</strong>，以及更现代的 <strong>物体划分（BVH）</strong>。</p>
+<blockquote>
+<p>直觉：就像查字典先翻到首字母所在的大章节，再逐级缩小范围，而不是从第一页开始逐字找。</p>
+</blockquote></div><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>包围盒求交写错 → 光线明明穿过盒子却被判定不相交 → 检查 t_min/t_max 的交换与负方向处理。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Nanite 和 Lumen 内部使用层次化加速结构（BVH）做光线求交与剔除；Unity 的 Ray Tracing API 也依赖 BVH。</p></li><li><p>在 UE 中可通过 <code>r.RayTracing</code> 相关 CVar 观察加速结构对性能的影响。</p></li></ul></div></section><section class="sec" id="s2"><h2><span class="h2-no">02</span><span>2. 均匀网格：预处理与光线遍历</span></h2><div class="sec-body"><p>均匀网格（Uniform Grids）把场景的包围盒切成规则的三维格子，每个物体登记到它覆盖的所有格子中。</p>
+<p><strong>预处理步骤</strong>：</p>
+<ol>
+<li>找到场景的包围盒（Bounding Box）。</li>
+<li>根据分辨率创建网格。</li>
+<li>对每个物体，将它存入所有与之重叠的格子。</li>
+</ol>
+<p><strong>光线与场景求交</strong>：</p>
+<ol>
+<li>按光线传播顺序逐步穿过网格（类似 2D 的 DDA 算法）。</li>
+<li>对每个经过的格子，测试其中存储的所有物体。</li>
+<li>一旦找到交点且该交点位于当前格子之前，即可提前结束。</li>
+</ol>
+<p>网格分辨率是关键参数：</p>
+<ul>
+<li>格子太少（比如只有 1 个）→ 没有加速效果。</li>
+<li>格子太多 → 光线要遍历大量空格子，额外开销大。</li>
+<li>经验公式：<code>#cells = C * #objs</code>，在 3D 中 C ≈ 27。</li>
+</ul>
+<p>均匀网格在<strong>物体大小均匀、空间分布均匀</strong>时表现很好（例如大量粒子、植被）。但遇到「体育场里的茶壶」问题——一个巨大物体和许多小物体共存时，巨大物体覆盖大量格子，导致每个格子都要测试它，效率骤降。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0012.webp" alt="图注：均匀网格在大量均匀分布物体时工作良好（PBRT 示例）。注意物体大小和空间分布都比较均匀。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.13</span><span>图注：均匀网格在大量均匀分布物体时工作良好（PBRT 示例）。注意物体大小和空间分布都比较均匀。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0013.webp" alt="图注：均匀网格失效的经典场景——「体育场里的茶壶」，巨大物体覆盖过多格子，导致遍历效率低下。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.14</span><span>图注：均匀网格失效的经典场景——「体育场里的茶壶」，巨大物体覆盖过多格子，导致遍历效率低下。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>网格分辨率设得过高 → 光线遍历大量空格子，反而比暴力求交慢 → 用经验公式估算并实测调整。</p></li><li><p>物体跨多个格子时重复存储 → 内存占用高且同一物体被多次测试 → 可改用物体划分结构（BVH）。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的粒子系统（Niagara）和植被剔除常用均匀网格做空间划分；Unity 的 Physics Broadphase 也使用类似网格结构。</p></li></ul></div></section><section class="sec" id="s3"><h2><span class="h2-no">03</span><span>3. 空间划分：KD-Tree 的构建与遍历</span></h2><div class="sec-body"><p>空间划分（Spatial Partitions）不把空间切成固定格子，而是<strong>递归地把空间切成不重叠的区域</strong>，形成树结构。常见例子有八叉树（Oct-Tree）、BSP 树和 KD 树。本讲以 KD 树为例（2D 示意，3D 同理）。</p>
+<p><strong>KD-Tree 预处理</strong>：</p>
+<ul>
+<li>每次选一个轴（x、y 或 z）和一个分割位置，把当前区域切成两半。</li>
+<li>递归进行，直到区域足够小或物体足够少。</li>
+<li>注意：一个物体可能跨越分割平面，因此会同时属于多个区域。</li>
+</ul>
+<p><strong>KD-Tree 节点存储</strong>：</p>
+<ul>
+<li>内部节点：分割轴、分割位置、子节点指针；<strong>不存储物体</strong>。</li>
+<li>叶子节点：存储物体列表。</li>
+</ul>
+<p><strong>遍历 KD-Tree</strong>：</p>
+<ol>
+<li>光线与当前节点区域求交，得到进入和离开的 t_min、t_max。</li>
+<li>如果是内部节点，判断光线先进入哪个子区域，先递归近的子节点，再递归远的子节点（若光线与远子区域相交）。</li>
+<li>如果是叶子节点，测试其中所有物体，记录最近交点。</li>
+<li>若当前最近交点 t_hit 小于 t_max，可提前终止。</li>
+</ol>
+<p>KD-Tree 的优点是空间划分严格不重叠，光线遍历顺序明确；缺点是同一物体可能被多个区域引用，且构建时分割平面的选择需要启发式（如沿最长轴、中位数分割）。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0015.webp" alt="图注：空间划分的几种例子：Oct-Tree、BSP-Tree、KD-Tree。注意它们都是递归划分空间，但分割方式不同。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.16</span><span>图注：空间划分的几种例子：Oct-Tree、BSP-Tree、KD-Tree。注意它们都是递归划分空间，但分割方式不同。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0019.webp" alt="图注：KD-Tree 的数据结构：内部节点存分割轴、分割位置和子节点指针，物体只存在叶子节点。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.20</span><span>图注：KD-Tree 的数据结构：内部节点存分割轴、分割位置和子节点指针，物体只存在叶子节点。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>物体跨分割平面时未重复存储 → 光线在某个区域漏掉该物体 → 构建时确保物体存入所有覆盖的叶子。</p></li><li><p>遍历时未按光线方向决定近远子节点 → 找到的交点不是最近 → 先递归近的子节点，并利用 t_hit 提前终止。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>KD-Tree 在实时光线追踪中较少直接使用，但 BSP 树在早期游戏（如 Doom）中用于可见性判断；UE 的 BSP  brush 仍保留类似概念。</p></li></ul></div></section><section class="sec" id="s4"><h2><span class="h2-no">04</span><span>4. 物体划分：BVH 的构建与遍历</span></h2><div class="sec-body"><p>BVH（Bounding Volume Hierarchy）是<strong>物体划分</strong>：把物体集合递归地分成不相交的子集，每个子集用一个包围盒包住。与 KD-Tree 不同，BVH 的包围盒可以重叠，但每个物体只属于一个叶子节点。</p>
+<p><strong>BVH 构建步骤</strong>：</p>
+<ol>
+<li>计算当前物体集合的包围盒。</li>
+<li>递归地将物体集合分成两个子集。</li>
+<li>重新计算两个子集的包围盒。</li>
+<li>当节点包含的物体足够少时停止，存入叶子节点。</li>
+</ol>
+<p><strong>如何划分子集</strong>：</p>
+<ul>
+<li>选择要分割的维度：通常选当前包围盒最长的轴。</li>
+<li>选择分割位置：常用中位数（median）或空间中点，使两边物体数量均衡。</li>
+</ul>
+<p><strong>BVH 节点存储</strong>：</p>
+<ul>
+<li>内部节点：包围盒、子节点指针。</li>
+<li>叶子节点：包围盒、物体列表。</li>
+</ul>
+<p><strong>BVH 遍历伪代码</strong>（来自课件）：</p>
+<pre><code>Intersect(Ray ray, BVH node) {
+    if (ray misses node.bbox) return;
+    if (node is a leaf node) {
+        test intersection with all objs;
+        return closest intersection;
+    }
+    hit1 = Intersect(ray, node.child1);
+    hit2 = Intersect(ray, node.child2);
+    return the closer of hit1, hit2;
+}
+</code></pre>
+<p>BVH 的优点是构建快、物体只存一份、包围盒重叠不影响正确性；现代实时光线追踪（如 UE 的 Lumen、Nanite）普遍采用 BVH 及其变种。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0032.webp" alt="图注：BVH 将物体集合递归划分，每个节点对应一个包围盒。注意包围盒可以重叠，但物体只属于一个叶子。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.33</span><span>图注：BVH 将物体集合递归划分，每个节点对应一个包围盒。注意包围盒可以重叠，但物体只属于一个叶子。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0036.webp" alt="图注：BVH 遍历的递归伪代码。先测试包围盒，叶子节点测试所有物体，内部节点递归取最近交点。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.37</span><span>图注：BVH 遍历的递归伪代码。先测试包围盒，叶子节点测试所有物体，内部节点递归取最近交点。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>划分时未重新计算子集包围盒 → 包围盒过大或过小，导致漏交或效率低 → 每次划分后重新计算。</p></li><li><p>递归遍历时未比较两个子节点的交点距离 → 返回了较远的交点 → 最后取 closer of hit1, hit2。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Nanite 使用层次化细节（HLOD）和 BVH 做光线求交；Lumen 的屏幕空间追踪和硬件光追都依赖 BVH。</p></li><li><p>Unity 的 Ray Tracing API 中，<code>RayTracingAccelerationStructure</code> 就是 BVH 的 GPU 实现。</p></li></ul></div><div class="code-wrap"><p class="code-cap">BVH 遍历伪代码（课件原文）（cpp）</p><pre class="code"><code class="lang-cpp">Intersect(Ray ray, BVH node) {
+    if (ray misses node.bbox) return;
+    if (node is a leaf node) {
+        test intersection with all objs;
+        return closest intersection;
+    }
+    hit1 = Intersect(ray, node.child1);
+    hit2 = Intersect(ray, node.child2);
+    return the closer of hit1, hit2;
+}</code></pre></div></section><section class="sec" id="s5"><h2><span class="h2-no">05</span><span>5. 空间划分 vs 物体划分：一张表看清区别</span></h2><div class="sec-body"><p>KD-Tree（空间划分）和 BVH（物体划分）是两种思路，容易混淆。课件用一张对比图总结：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>空间划分（KD-Tree）</th>
+<th>物体划分（BVH）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>划分对象</td>
+<td>空间区域</td>
+<td>物体集合</td>
+</tr>
+<tr>
+<td>区域是否重叠</td>
+<td>不重叠</td>
+<td>包围盒可重叠</td>
+</tr>
+<tr>
+<td>物体归属</td>
+<td>一个物体可属于多个区域</td>
+<td>一个物体只属于一个叶子</td>
+</tr>
+<tr>
+<td>构建难度</td>
+<td>较复杂（需选分割平面）</td>
+<td>较简单（按物体分）</td>
+</tr>
+<tr>
+<td>遍历提前终止</td>
+<td>容易（按 t 排序）</td>
+<td>需比较两个子节点结果</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键区别</strong>：空间划分保证区域不重叠，因此光线遍历顺序唯一，可以严格按 t 从小到大访问；物体划分的包围盒可能重叠，光线可能同时进入两个子节点，需要递归两边并取最近交点。</p>
+<p>实际工程中，BVH 因为构建快、内存局部性好，成为实时光线追踪的主流选择；KD-Tree 在离线渲染中仍有应用。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0037.webp" alt="图注：空间划分与物体划分的对比。左边 KD-Tree 区域不重叠但物体跨区域；右边 BVH 物体只属一个叶子但包围盒重叠。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.38</span><span>图注：空间划分与物体划分的对比。左边 KD-Tree 区域不重叠但物体跨区域；右边 BVH 物体只属一个叶子但包围盒重叠。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>误以为 BVH 的包围盒不能重叠 → 担心正确性 → 重叠不影响正确性，只影响效率。</p></li><li><p>在 BVH 遍历中试图按 t 排序只访问一个子节点 → 可能漏掉更近的交点 → 必须递归两个子节点（除非用 t_hit 提前终止）。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Lumen 使用 BVH 做全局光照追踪；Unity 的 HDRP 光追也基于 BVH。</p></li></ul></div></section><section class="sec" id="s6"><h2><span class="h2-no">06</span><span>6. 辐射度量学：为什么需要物理正确的光照单位</span></h2><div class="sec-body"><p>在 Assignment 中我们实现 Blinn-Phong 模型，光强 I 通常随便取一个数（比如 10）。但 Whitted 风格光线追踪给出的结果<strong>物理上不正确</strong>——它没有能量守恒，也没有真实的度量单位。辐射度量学（Radiometry）提供了一套测量光照的物理量和单位，是路径追踪（Path Tracing）的基础。</p>
+<p>本讲介绍四个核心量：</p>
+<ul>
+<li><strong>辐射能量（Radiant Energy）</strong>：电磁辐射的能量，单位焦耳（J），符号 Q。</li>
+<li><strong>辐射通量（Radiant Flux / Power）</strong>：单位时间发射、反射、传输或接收的能量，Φ = dQ/dt，单位瓦特（W）或流明（lm）。可以理解为「单位时间内通过传感器的光子数量」。</li>
+<li><strong>辐射强度（Radiant Intensity）</strong>：点光源在单位立体角内发射的功率，I = dΦ/dω，单位 W/sr（瓦特每球面度），也可用坎德拉（cd）。</li>
+<li><strong>辐照度（Irradiance）</strong>：单位面积接收的辐射通量，E = dΦ/dA，单位 W/m²。</li>
+<li><strong>辐亮度（Radiance）</strong>：单位立体角、单位投影面积上的辐射通量，L = d²Φ/(dω dA cosθ)，单位 W/(sr·m²)。</li>
+</ul>
+<p>课件强调：<strong>辐射强度</strong>描述光源发射，<strong>辐照度</strong>描述表面接收，<strong>辐亮度</strong>描述光线传播。三者分别对应「光源→表面→光线」的不同阶段。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0044.webp" alt="图注：三种重要光度量：辐射强度（光源发射）、辐照度（表面接收）、辐亮度（光线传播）。看图时注意它们对应的几何量。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.45</span><span>图注：三种重要光度量：辐射强度（光源发射）、辐照度（表面接收）、辐亮度（光线传播）。看图时注意它们对应的几何量。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>混淆辐射强度与辐照度 → 单位用错 → 强度是 W/sr，辐照度是 W/m²。</p></li><li><p>认为 Blinn-Phong 的光强有物理单位 → 实际是任意缩放 → 物理正确渲染需用辐射度量单位。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的物理光照单位：Directional Light 用 lux（勒克斯），Point Light 用 lumen（流明），Spot Light 用 candela（坎德拉）。这些正是辐射度量学的派生单位。</p></li><li><p>Unity 的 Light 组件中 Intensity 单位可选 Lumen、Candela、Lux，与课件中的单位对应。</p></li></ul></div></section><section class="sec" id="s7"><h2><span class="h2-no">07</span><span>7. 角度与立体角：从 2D 弧长到 3D 球面面积</span></h2><div class="sec-body"><p>角度（Angle）是圆弧长度与半径之比：θ = l / r，单位弧度（rad）。整个圆有 2π 弧度。</p>
+<p>立体角（Solid Angle）是球面面积与半径平方之比：Ω = A / r²，单位球面度（sr）。整个球面有 4π 球面度。</p>
+<p><strong>微分立体角</strong>：在球坐标下，球面上一个小面积元 dA = (r dθ)(r sinθ dφ) = r² sinθ dθ dφ，因此
+\[ d\omega = \frac{dA}{r^2} = \sin\theta \, d\theta \, d\phi \]</p>
+<p>对整个球面积分：
+\[ \int_{S^2} d\omega = \int_0^{2\pi} \int_0^{\pi} \sin\theta \, d\theta \, d\phi = 4\pi \]</p>
+<p>方向向量 ω 通常用单位向量表示。</p>
+<p><strong>各向同性点光源</strong>：如果点光源向所有方向均匀发射，总通量 Φ 均匀分布在 4π 立体角上，则辐射强度 I = Φ / (4π)。例如一个 11W LED 灯泡标称 800 流明，若各向同性，则强度约为 800 / (4π) ≈ 63.7 坎德拉。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0048.webp" alt="图注：微分立体角的推导：球面小面积元 dA = r² sinθ dθ dφ，所以 dω = sinθ dθ dφ。注意 sinθ 因子的来源。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.49</span><span>图注：微分立体角的推导：球面小面积元 dA = r² sinθ dθ dφ，所以 dω = sinθ dθ dφ。注意 sinθ 因子的来源。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L14/p0051.webp" alt="图注：各向同性点光源的总通量等于强度在 4π 立体角上的积分，因此 I = Φ / (4π)。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.52</span><span>图注：各向同性点光源的总通量等于强度在 4π 立体角上的积分，因此 I = Φ / (4π)。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>忘记微分立体角中的 sinθ 因子 → 积分结果错误 → 记住 dω = sinθ dθ dφ。</p></li><li><p>把立体角单位 sr 当成角度单位 rad → 概念混淆 → sr 是球面度，rad 是弧度。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>在 UE 中调整 Point Light 的 Intensity 时，单位选 Candela 就是辐射强度；选 Lumen 则是总通量，引擎内部会除以 4π 转换为强度。</p></li></ul></div></section><h2><span>引擎对照表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>概念 / 效果</th><th>Unreal Engine</th><th>Unity</th></tr></thead><tbody><tr><td><p>光线求交加速结构</p></td><td><p>Nanite/Lumen 使用 BVH；硬件光追使用 TLAS/BLAS</p></td><td><p>RayTracingAccelerationStructure（BVH）</p></td></tr><tr><td><p>点光源强度单位</p></td><td><p>Point Light Intensity 单位可选 Candela 或 Lumen</p></td><td><p>Light Intensity 单位可选 Candela/Lumen/Lux</p></td></tr><tr><td><p>方向光辐照度单位</p></td><td><p>Directional Light 用 Lux</p></td><td><p>Directional Light 用 Lux</p></td></tr><tr><td><p>空间划分结构</p></td><td><p>BSP 用于关卡几何（Brush）</p></td><td><p>Occlusion Culling 使用类似 Umbra 的划分</p></td></tr></tbody></table></div><h2><span>术语双语表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>English</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>Uniform Grids</td><td>均匀网格</td><td><p>将空间切成规则格子，物体存入重叠格子，适合均匀分布场景。</p></td></tr><tr><td>Spatial Partition</td><td>空间划分</td><td><p>递归将空间切成不重叠区域，如 KD-Tree、Oct-Tree。</p></td></tr><tr><td>BVH</td><td>层次包围盒</td><td><p>将物体集合递归二分，每个节点有包围盒，物体只存叶子。</p></td></tr><tr><td>Radiant Flux</td><td>辐射通量</td><td><p>单位时间发射/接收的能量，Φ = dQ/dt，单位 W 或 lm。</p></td></tr><tr><td>Radiant Intensity</td><td>辐射强度</td><td><p>点光源单位立体角发射的功率，I = dΦ/dω，单位 W/sr 或 cd。</p></td></tr><tr><td>Irradiance</td><td>辐照度</td><td><p>单位面积接收的辐射通量，E = dΦ/dA，单位 W/m²。</p></td></tr><tr><td>Radiance</td><td>辐亮度</td><td><p>单位立体角、单位投影面积的辐射通量，L = d²Φ/(dω dA cosθ)。</p></td></tr><tr><td>Solid Angle</td><td>立体角</td><td><p>球面面积与半径平方之比，Ω = A/r²，单位 sr，整球 4π sr。</p></td></tr><tr><td>Isotropic</td><td>各向同性</td><td><p>向所有方向均匀发射，强度 I = Φ/(4π)。</p></td></tr></tbody></table></div><h2><span>课后练习</span></h2><div class="quiz"><p class="quiz-q"><span class="q-no">01</span><span><p>简述均匀网格（Uniform Grids）的预处理步骤和光线遍历流程，并说明它在什么情况下会失效。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>预处理：包围盒→建格→物体存入重叠格子；遍历：按光线顺序穿过格子，测试格子内物体。</p></p><p class="quiz-a"><p>预处理：1) 求场景包围盒；2) 按分辨率创建网格；3) 将每个物体存入所有与之重叠的格子。遍历：光线按传播顺序逐步穿过网格，对每个经过的格子测试其中所有物体，找到交点后若交点位于当前格子之前可提前结束。失效场景：物体大小差异大（如体育场里的茶壶），巨大物体覆盖大量格子，导致每个格子都要测试它，效率骤降。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">02</span><span><p>给定一个包含 4 个物体的场景，请手工构建一棵 BVH（用最长轴+中位数分割），并画出树结构。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>先求整体包围盒，选最长轴，按物体中心坐标排序取中位数分成两组，递归直到每个叶子一个物体。</p></p><p class="quiz-a"><p>假设 4 个物体中心坐标分别为 (0,0,0)、(1,0,0)、(2,0,0)、(3,0,0)，整体包围盒 x 轴最长。按 x 坐标排序，中位数分成两组：{0,1} 和 {2,3}。分别计算两组包围盒。再对每组递归：{0,1} 按 x 中位数分成 {0} 和 {1}；{2,3} 分成 {2} 和 {3}。最终树：根节点（包围盒覆盖 0~3）→ 左子节点（覆盖 0~1）→ 叶子 {0}、{1}；右子节点（覆盖 2~3）→ 叶子 {2}、{3}。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">03</span><span><p>写出 BVH 遍历的递归伪代码，并解释为什么最后要返回两个子节点中较近的交点。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>参考课件伪代码；因为包围盒可能重叠，光线可能同时进入两个子节点。</p></p><p class="quiz-a"><p>伪代码：
+Intersect(Ray ray, BVH node) {
+    if (ray misses node.bbox) return;
+    if (node is leaf) { test all objs; return closest; }
+    hit1 = Intersect(ray, node.child1);
+    hit2 = Intersect(ray, node.child2);
+    return closer of hit1, hit2;
+}
+原因：BVH 的包围盒可以重叠，光线可能同时穿过两个子节点的包围盒，因此必须递归两边，取距离最近的交点才是正确的可见点。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">04</span><span><p>一个各向同性点光源的总辐射通量为 1000 lm，求其辐射强度（单位 cd）。若该光源照射到距离 2m 处的一个垂直于光线的表面，求该表面的辐照度（假设点光源近似）。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>I = Φ/(4π)；E = I / r²（因为 E = Φ/A，A = 4πr² 时 Φ 均匀分布，但这里用 I/r² 更直接）。</p></p><p class="quiz-a"><p>辐射强度 I = Φ/(4π) = 1000/(4π) ≈ 79.6 cd。距离 r=2m 处，辐照度 E = I / r² = 79.6 / 4 ≈ 19.9 lx（或 W/m² 量纲对应）。注意：若用总通量算，E = Φ/(4πr²) = 1000/(4π*4) ≈ 19.9，一致。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">05</span><span><p>在 UE 中创建一个 Point Light，将 Intensity 单位设为 Candela，数值设为 100。这对应辐射度量学中的哪个量？如果改为 Lumen 单位，数值应设为多少才能得到相同的物理亮度？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>Candela 对应辐射强度 I；Lumen 对应总通量 Φ = 4πI。</p></p><p class="quiz-a"><p>Candela 对应辐射强度 I。若 I=100 cd，则总通量 Φ = 4πI = 4π*100 ≈ 1256.6 lm。因此在 Lumen 单位下应设为约 1257 lm 才能得到相同的物理亮度。</p></p></details></div><nav class="pager"><a class="cta prev" href="../GAMES101/101_L13.html"><span class="dir"><small>← 上一讲</small><b>L13 光线追踪（一）</b></span></a><a class="cta next" href="../GAMES101/101_L15.html"><span class="dir"><small>下一讲 →</small><b>L15 光传输与渲染方程</b></span></a></nav><footer class="page-foot"><span>本手册基于 GAMES101 课件整理，仅供个人学习使用。</span><span>课件版权归原作者与课程组所有。</span><span><a href="../index.html">手册首页</a> · <a href="../GAMES101/index.html">GAMES101 课程总览</a></span></footer></article></main></div><div class="reading-bar" id="reading-bar" aria-hidden="true"></div><div class="search-overlay" id="search-overlay"><div class="search-panel" role="dialog" aria-modal="true" aria-label="搜索手册"><div class="search-input-row"><span class="ico" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索知识点、术语、常见坑、讲次…" autocomplete="off" aria-label="搜索关键词"><kbd>Esc</kbd></div><div class="search-list" id="search-list"></div><div class="search-hint"><span>↑↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div></div></div><div class="lightbox" id="lightbox" aria-hidden="true"></div><script src="../assets/katex/katex.min.js"></script><script src="../assets/katex/contrib/auto-render.min.js"></script><script src="../assets/search-index.js"></script><script src="../assets/app.js"></script><script>document.addEventListener("DOMContentLoaded",function(){if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:false});});</script></body></html>

@@ -1,0 +1,187 @@
+/* ============================================================================
+   设计令牌 · Apple/iOS 风格（亮 / 暗双主题）
+   —— 前端设计技能包的正本。复制到项目 src/styles/tokens.css 即可用。
+   规则：组件只消费变量，不写死颜色/阴影/圆角；换品牌色只改 --accent 与 --tone-*。
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* 页面底色（不是纯白：留一点灰，纸面卡片才浮得起来） */
+  --bg: #f5f5f7;
+  --bg-dim: #ececf0;
+
+  /* 材质面板：半透明 + 模糊；--panel-strong 用于正文纸面 */
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel-strong: rgba(255, 255, 255, 0.88);
+  --panel-solid: #ffffff;
+  --panel-2: #f2f2f7;           /* 内嵌面板 / 代码底 / 表头斑马 */
+  --hairline: rgba(0, 0, 0, 0.12);
+  --hairline-soft: rgba(0, 0, 0, 0.07);
+
+  /* 文字三级：正文 / 次级 / 说明（ink-3 必须 ≥4.5:1，用于 11–13px 小字） */
+  --ink: #1d1d1f;
+  --ink-2: #515154;
+  --ink-3: #6e6e73;
+
+  /* 品牌与语义色（iOS 系统色） */
+  --accent: #0066cc;            /* 主色：链接 / 焦点 / 主按钮（白底 5.6:1、浅灰底 5.1:1，AA 达标） */
+  --accent-soft: rgba(0, 102, 204, 0.10);
+  --accent-2: #0071a4;          /* 次强调（图表第二色 / 次级标签） */
+  --hot: #d70015;               /* 当前操作 / 错误 */
+  --ok: #1f7d36;                /* 完成 / 正确（白底 5.2:1） */
+  --warn: #ad5700;              /* 警告 / 比较 */
+  --purple: #8d34c9;
+
+  /* 分区色：每个栏目/章节/课程一色，用于该区的编号、标签、徽章、进度 */
+  --tone-1: #0066cc;
+  --tone-2: #5e5ce6;
+  --tone-3: #1f7d36;
+  --tone-4: #b5430a;
+  --tone-5: #9a6a00;
+  --tone-6: #0071a4;
+  --tone-7: #8d34c9;
+  --tone-8: #c0397a;
+  --tone-current: var(--accent); /* 当前分区色（html[data-tone] 覆盖） */
+
+  /* 提示块底色（透明描边方案下的备选填充） */
+  --key-bg: rgba(0, 102, 204, 0.08);
+  --warn-bg: rgba(255, 149, 0, 0.12);
+  --tip-bg: rgba(52, 199, 89, 0.12);
+
+  /* 代码 */
+  --code-bg: #f6f6f8;
+  --code-ink: #1d1d1f;
+  --code-line: #d2d2d7;
+
+  /* 字体：只用系统字体栈（零网络请求、首屏无字体闪烁） */
+  --font:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue',
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono:
+    ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, Menlo,
+    'JetBrains Mono', monospace;
+  --font-math: 'Cambria Math', 'Latin Modern Math', 'Times New Roman', Georgia, serif;
+
+  /* 几何：四档圆角，不多造 */
+  --r-s: 8px;
+  --r-m: 12px;
+  --r-l: 16px;
+  --r-xl: 22px;
+
+  /* 阴影：两级，都是「1 近 + 1 远」的双层软影 */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 20px rgba(0, 0, 0, 0.05);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.07), 0 14px 40px rgba(0, 0, 0, 0.12);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.03), 0 8px 28px rgba(0, 0, 0, 0.05);
+
+  /* 玻璃材质与光晕背景 */
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --pressed: rgba(0, 0, 0, 0.05);
+  --selected: rgba(120, 120, 128, 0.12);
+  --aura-1: rgba(217, 64, 96, 0.10);   /* 光晕 1（暖） */
+  --aura-2: rgba(10, 132, 255, 0.10);  /* 光晕 2（冷） */
+
+  /* 覆盖层遮罩 / 代码折叠渐隐 / 打印（组件层不要写死这三类色） */
+  --scrim: rgba(0, 0, 0, 0.48);
+  --mask-ink: #000;
+  --print-bg: #fff;
+  --print-ink: #666;
+
+  /* 布局 */
+  --topbar-h: 72px;             /* 14 边距 + 44 胶囊 + 14 边距 */
+  --sidebar-w: 288px;
+  --measure: 880px;             /* 文章版心 */
+  --measure-wide: 1120px;       /* 卡片网格版心（比文章宽） */
+
+  /* 动效曲线：所有按压/悬停统一用它 */
+  --press-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ------------------------------------------------------------- 暗色主题 */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #161617;
+  --bg-dim: #0d0d0e;
+
+  --panel: rgba(28, 28, 30, 0.72);
+  --panel-strong: rgba(36, 36, 38, 0.88);
+  --panel-solid: #1e1e20;
+  --panel-2: #2a2a2d;
+  --hairline: rgba(255, 255, 255, 0.16);
+  --hairline-soft: rgba(255, 255, 255, 0.09);
+
+  --ink: #f5f5f7;
+  --ink-2: #a1a1a6;
+  --ink-3: #98989d;
+
+  --accent: #4db8e8;
+  --accent-soft: rgba(77, 184, 232, 0.16);
+  --accent-2: #4db8e8;
+  --hot: #ff453a;
+  --ok: #30d158;
+  --warn: #ff9f0a;
+  --purple: #bf5af2;
+
+  --tone-1: #0a84ff;
+  --tone-2: #7d7aff;
+  --tone-3: #30d158;
+  --tone-4: #ff6b3d;
+  --tone-5: #f0b429;
+  --tone-6: #4db8e8;
+  --tone-7: #bf5af2;
+  --tone-8: #ff6aa2;
+
+  --key-bg: rgba(10, 132, 255, 0.14);
+  --warn-bg: rgba(255, 159, 10, 0.14);
+  --tip-bg: rgba(48, 209, 88, 0.14);
+
+  --code-bg: #242427;
+  --code-ink: #e8e8ed;
+  --code-line: #3a3a3d;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.5), 0 16px 48px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.45);
+
+  --glass: rgba(28, 28, 30, 0.66);
+  --glass-strong: rgba(28, 28, 30, 0.92);
+  --pressed: rgba(255, 255, 255, 0.08);
+  --selected: rgba(120, 120, 128, 0.24);
+  --aura-1: rgba(255, 111, 138, 0.10);
+  --aura-2: rgba(10, 132, 255, 0.12);
+}
+
+/* ----------------------------------------------- 当前分区色（可选挂 data-tone） */
+:root[data-tone='1'] { --tone-current: var(--tone-1); }
+:root[data-tone='2'] { --tone-current: var(--tone-2); }
+:root[data-tone='3'] { --tone-current: var(--tone-3); }
+:root[data-tone='4'] { --tone-current: var(--tone-4); }
+:root[data-tone='5'] { --tone-current: var(--tone-5); }
+:root[data-tone='6'] { --tone-current: var(--tone-6); }
+:root[data-tone='7'] { --tone-current: var(--tone-7); }
+:root[data-tone='8'] { --tone-current: var(--tone-8); }
+
+/* ------------------------------------------------------- 无障碍偏好适配 */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --panel: rgba(255, 255, 255, 0.98);
+    --panel-strong: #ffffff;
+  }
+  [data-theme='dark'] {
+    --panel: rgba(28, 28, 30, 0.98);
+    --panel-strong: #1c1c1e;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --hairline: rgba(0, 0, 0, 0.5);
+    --ink-2: #333336;
+  }
+  [data-theme='dark'] {
+    --hairline: rgba(255, 255, 255, 0.5);
+    --ink-2: #d5d5da;
+  }
+}

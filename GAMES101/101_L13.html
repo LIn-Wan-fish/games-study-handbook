@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-tone="1" data-root="../">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 13 讲：光线追踪（一）——Whitted 风格光线追踪与求交 · GAMES 学习手册</title>
+<meta name="description" content="从光栅化的局限出发，理解光线投射、递归光线追踪，以及光线与球/平面/三角形/AABB 的求交计算">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230066cc'/%3E%3Ctext x='16' y='22' font-family='-apple-system,Segoe UI,sans-serif' font-size='17' font-weight='800' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var t = q === 'light' || q === 'dark' ? q : localStorage.getItem('theme');
+    var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+</script>
+</head><div class="bg-aura" aria-hidden="true"></div><header class="topbar"><div class="topbar-left"><a class="nav-pill brand-pill" href="../index.html" aria-label="GAMES 学习手册首页"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-text"><b>GAMES 学习手册</b><small>计算机图形学 · 3A 游戏开发</small></span></a><span class="nav-pill crumb-pill"><a href="../index.html">首页</a> / <a href="../GAMES101/index.html">GAMES101</a> / <b>光线追踪（一）</b></span></div><nav class="topbar-center seg-tabs" aria-label="课程切换"><a class="seg-tab active" href="../GAMES101/index.html" data-tone="1"><span class="seg-code">GAMES101</span></a><a class="seg-tab" href="../GAMES104/index.html" data-tone="2"><span class="seg-code">GAMES104</span></a><a class="seg-tab" href="../GAMES202/index.html" data-tone="3"><span class="seg-code">GAMES202</span></a><a class="seg-tab" href="../GAMES105/index.html" data-tone="4"><span class="seg-code">GAMES105</span></a></nav><div class="topbar-right"><button class="topbar-ctl search-btn" type="button" data-search-open aria-label="搜索知识点"><span class="s-ico" aria-hidden="true">⌕</span><span class="s-label">搜索</span><kbd>/</kbd></button><button class="topbar-ctl theme-btn" type="button" data-theme-toggle aria-label="切换主题"><span aria-hidden="true">◐</span><span class="t-label" data-theme-label>浅色</span></button><button class="topbar-ctl print-btn" type="button" data-print aria-label="打印本页"><span class="p-ico" aria-hidden="true">⎙</span><span class="p-label">打印</span></button><button class="topbar-ctl menu-btn" type="button" data-side-toggle aria-label="打开目录" aria-expanded="false">☰</button></div></header><div class="shell-body"><aside class="sidebar material" aria-label="目录"><div class="side-block"><p class="sidebar-h">本讲目录</p><ul class="toc page-toc"><li><a href="#s1">1. 为什么需要光线追踪：光栅化搞不定的全局效果</a></li><li><a href="#s2">2. 光线的基本假设与光线投射</a></li><li><a href="#s3">3. Whitted 风格递归光线追踪</a></li><li><a href="#s4">4. 光线与隐式曲面求交：球与一般曲面</a></li><li><a href="#s5">5. 光线与三角形求交：平面法 + 重心坐标</a></li><li><a href="#s6">6. 包围盒（AABB）加速：让求交变快</a></li></ul></div><div class="side-block"><p class="sidebar-h">全部讲次<span class="count">22 讲</span></p><ul class="toc lecture-toc"><li><a href="../GAMES101/index.html"><span class="lec-no">◎</span><span>课程总览</span></a></li><li><a class="" href="../GAMES101/101_L01.html"><span class="lec-no">L01</span><span>课程总览</span></a></li><li><a class="" href="../GAMES101/101_L02.html"><span class="lec-no">L02</span><span>线性代数复习</span></a></li><li><a class="" href="../GAMES101/101_L03.html"><span class="lec-no">L03</span><span>2D 变换与齐次坐标</span></a></li><li><a class="" href="../GAMES101/101_L04.html"><span class="lec-no">L04</span><span>观测变换与投影</span></a></li><li><a class="" href="../GAMES101/101_L05.html"><span class="lec-no">L05</span><span>光栅化（一）三角形与采样</span></a></li><li><a class="" href="../GAMES101/101_L06.html"><span class="lec-no">L06</span><span>反走样与深度缓冲</span></a></li><li><a class="" href="../GAMES101/101_L07.html"><span class="lec-no">L07</span><span>着色（一）Blinn-Phong</span></a></li><li><a class="" href="../GAMES101/101_L08.html"><span class="lec-no">L08</span><span>着色（一）Blinn-Phong</span></a></li><li><a class="" href="../GAMES101/101_L09.html"><span class="lec-no">L09</span><span>纹理映射与重心坐标</span></a></li><li><a class="" href="../GAMES101/101_L10.html"><span class="lec-no">L10</span><span>几何（一）隐式与显式</span></a></li><li><a class="" href="../GAMES101/101_L11.html"><span class="lec-no">L11</span><span>贝塞尔曲线与曲面</span></a></li><li><a class="" href="../GAMES101/101_L12.html"><span class="lec-no">L12</span><span>几何处理与阴影</span></a></li><li><a class="active" href="../GAMES101/101_L13.html"><span class="lec-no">L13</span><span>光线追踪（一）</span></a></li><li><a class="" href="../GAMES101/101_L14.html"><span class="lec-no">L14</span><span>加速结构与辐射度量</span></a></li><li><a class="" href="../GAMES101/101_L15.html"><span class="lec-no">L15</span><span>光传输与渲染方程</span></a></li><li><a class="" href="../GAMES101/101_L16.html"><span class="lec-no">L16</span><span>路径追踪</span></a></li><li><a class="" href="../GAMES101/101_L17.html"><span class="lec-no">L17</span><span>材质与外观</span></a></li><li><a class="" href="../GAMES101/101_L18.html"><span class="lec-no">L18</span><span>高级渲染专题</span></a></li><li><a class="" href="../GAMES101/101_L19.html"><span class="lec-no">L19</span><span>相机与镜头</span></a></li><li><a class="" href="../GAMES101/101_L20.html"><span class="lec-no">L20</span><span>颜色与感知</span></a></li><li><a class="" href="../GAMES101/101_L21.html"><span class="lec-no">L21</span><span>动画</span></a></li><li><a class="" href="../GAMES101/101_L22.html"><span class="lec-no">L22</span><span>动画（续）单粒子与流体</span></a></li></ul></div><div class="side-foot">基于 GAMES101 课件整理 · 仅供个人学习<br><a href="../index.html">← 返回手册首页</a></div></aside><div class="side-scrim"></div><main class="page"><article class="article"><header class="ch-head"><span class="ch-course">GAMES101 · 现代计算机图形学入门</span><h1 class="ch-title">第 13 讲：光线追踪（一）——Whitted 风格光线追踪与求交</h1><p class="ch-sub">从光栅化的局限出发，理解光线投射、递归光线追踪，以及光线与球/平面/三角形/AABB 的求交计算</p><div class="ch-meta"><span class="chip">课件 <b>41</b> 页</span><span class="chip">精讲 <b>6</b> 节</span><span class="chip">术语 <b>10</b> 条</span><span class="chip">练习 <b>4</b> 道</span></div></header><div class="objectives"><div class="callout key"><p class="callout-h">◆ 学完这一讲，你应该能</p><ul><li><p>能说出光栅化在全局效果（软阴影、多次反弹、间接光照）上的不足，以及光线追踪为什么能解决这些问题</p></li><li><p>能写出光线的参数方程，并推导光线与球、平面、三角形（Möller–Trumbore）的求交公式</p></li><li><p>理解包围盒（AABB）加速求交的原理，能计算光线与 AABB 的 t_enter / t_exit 并判断相交</p></li><li><p>能描述 Whitted 风格递归光线追踪中 primary ray、secondary ray、shadow ray 的作用</p></li><li><p>能在 UE/Unity 中识别哪些效果属于光线追踪范畴（如 Lumen、Ray Tracing 阴影/反射）</p></li></ul></div></div><div class="keybox"><p class="keybox-h">核心结论速记</p><ol class="keybox-list"><li><p>光栅化快但只能处理局部光照，软阴影、光泽反射、间接光照等全局效果需要光线追踪。</p></li><li><p>光线追踪的基本假设：光线沿直线传播、互不碰撞、光路可逆；因此可以从眼睛反向发射光线。</p></li><li><p>光线投射（Ray Casting）：每个像素发一条 eye ray，求最近交点，在交点做局部着色（如 Blinn-Phong），并向光源发 shadow ray 判断可见性。</p></li><li><p>Whitted 风格递归光线追踪：在交点处继续发射反射光线和折射光线，递归收集颜色，并乘以相应的 Fresnel/衰减系数。</p></li><li><p>光线与隐式曲面求交：将光线方程代入曲面方程，解出实数正根 t。</p></li><li><p>光线与三角形求交可分解为：先求与三角形所在平面的交点，再判断交点是否在三角形内；Möller–Trumbore 算法直接给出重心坐标，更快。</p></li><li><p>包围盒（AABB）加速：先用简单包围盒快速排除不相交的物体，只有光线与包围盒相交时才进一步测试内部图元。</p></li><li><p>光线与 AABB 求交：分别计算光线与三对 slab 的 t_min/t_max，取 t_enter = max{t_min}，t_exit = min{t_max}；若 t_enter &lt; t_exit 且 t_exit &gt;= 0，则相交。</p></li></ol></div><section class="sec" id="s1"><h2><span class="h2-no">01</span><span>1. 为什么需要光线追踪：光栅化搞不定的全局效果</span></h2><div class="sec-body"><p>光栅化（Rasterization）把三角形投影到屏幕、逐像素着色，速度很快，适合实时渲染。但它本质上是一个<strong>局部（local）</strong>着色模型：每个像素的颜色只取决于该点直接可见的光源和材质，很难处理光线在场景中多次反弹带来的效果。</p>
+<p>课件列举了光栅化难以处理的几类<strong>全局效果（global effects）</strong>：</p>
+<ul>
+<li><strong>软阴影（soft shadows）</strong>：面光源产生的半影，需要知道光源上各点对 shading point 的可见性。</li>
+<li><strong>光泽反射（glossy reflection）</strong>：粗糙表面的模糊反射，需要采样多个反射方向。</li>
+<li><strong>间接光照（indirect illumination）</strong>：光线从墙面反弹后照亮背光面，即全局光照（global illumination）。</li>
+</ul>
+<p>光栅化不是不能做这些，而是需要大量 hack（如 shadow map、SSR、SSAO），质量有限且容易出 bug。课件用《绝地求生》的截图说明光栅化效果可能出错。</p>
+<p>光线追踪则<strong>准确但慢</strong>：课件提到迪士尼《疯狂动物城》一帧在生产环境中需要约 1 万 CPU 核心小时。光栅化是实时的，光线追踪早期是离线的。</p>
+<blockquote>
+<p>直觉：光栅化是“从物体到屏幕”的投影，光线追踪是“从眼睛到场景”的搜索。前者快但只看一次，后者慢但能沿着光路反复查询。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0003.webp" alt="图注：光栅化难以处理的全局效果示例——软阴影、光泽反射、间接光照。注意这些效果都不是单个像素与单个光源的直接关系能描述的。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.4</span><span>图注：光栅化难以处理的全局效果示例——软阴影、光泽反射、间接光照。注意这些效果都不是单个像素与单个光源的直接关系能描述的。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0005.webp" alt="图注：光线追踪的代价——《疯狂动物城》一帧约需 1 万 CPU 核心小时，说明其离线渲染的昂贵。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.6</span><span>图注：光线追踪的代价——《疯狂动物城》一帧约需 1 万 CPU 核心小时，说明其离线渲染的昂贵。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>把“光线追踪”等同于“实时渲染”：早期光线追踪是离线渲染，实时需要硬件加速（RTX）或降噪。</p></li><li><p>认为光栅化完全不能做全局效果：现代引擎用屏幕空间技术近似，但物理准确性不如光线追踪。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE5 的 Lumen 是软件/硬件光线追踪的混合全局光照方案，取代传统光照贴图；硬件光追（Ray Tracing）可开启更精确的反射和阴影。</p></li><li><p>Unity 的 HDRP 支持 Ray Tracing（DX12/Vulkan），用于反射、阴影、AO；内置管线则主要靠屏幕空间后处理近似。</p></li></ul></div></section><section class="sec" id="s2"><h2><span class="h2-no">02</span><span>2. 光线的基本假设与光线投射</span></h2><div class="sec-body"><p>课件先给出关于光线的三条（物理上并不完全正确、但图形学中够用的）假设：</p>
+<ol>
+<li><strong>光线沿直线传播</strong>（忽略波动性）。</li>
+<li><strong>光线之间互不碰撞</strong>（忽略干涉、衍射）。</li>
+<li><strong>光线从光源出发进入眼睛</strong>；但物理在路径反转下不变（<strong>光路可逆性，reciprocity</strong>），所以我们可以反过来从眼睛发射光线。</li>
+</ol>
+<p>第三条是光线追踪的关键：我们不需要模拟从光源发出的无数光线，只需从相机（眼睛）出发，为每个像素发射一条<strong>eye ray</strong>，找到它首先击中的物体，然后计算该点的颜色。</p>
+<p><strong>光线投射（Ray Casting）</strong>（Appel 1968）的流程：</p>
+<ul>
+<li>对每个像素，从眼睛出发穿过该像素中心发射一条光线；</li>
+<li>求这条光线与场景中所有物体的最近交点；</li>
+<li>在交点处做局部着色（例如 Blinn-Phong）；</li>
+<li>向光源发射一条<strong>shadow ray</strong>，若被遮挡则处于阴影中。</li>
+</ul>
+<p>课件用针孔相机模型（pinhole camera model）说明：眼睛是起点，成像平面（image plane，透视投影中的近平面）上的像素决定光线方向。注意一条光线可能与场景有多个交点，我们只取最近的（最小正 t）。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0010.webp" alt="图注：针孔相机模型下生成 eye ray——从眼睛出发穿过像素，光线可能与场景有多个交点，需取最近者。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.11</span><span>图注：针孔相机模型下生成 eye ray——从眼睛出发穿过像素，光线可能与场景有多个交点，需取最近者。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>忘记光路可逆性：从光源发射光线会导致大量光线浪费，正确做法是从眼睛发射。</p></li><li><p>求交时取了最大 t 或负 t：应取最小正 t，负 t 表示交点在眼睛后方。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Ray Tracing 阴影本质上就是从 shading point 向光源发射 shadow ray 判断可见性。</p></li><li><p>Unity 的 Ray Tracing 反射也是从相机发射光线，命中后采样材质颜色。</p></li></ul></div></section><section class="sec" id="s3"><h2><span class="h2-no">03</span><span>3. Whitted 风格递归光线追踪</span></h2><div class="sec-body"><p>简单的光线投射只做局部着色，仍然无法处理反射和折射。Whitted（1980）提出<strong>递归光线追踪（recursive ray tracing）</strong>：在光线与物体的交点处，除了向光源发射 shadow ray 外，还继续发射<strong>反射光线（reflected ray）</strong>和<strong>折射光线（refracted ray）</strong>，递归地收集这些方向上的颜色，再按材质系数混合。</p>
+<p>课件把光线分为：</p>
+<ul>
+<li><strong>primary ray</strong>：从眼睛出发的第一条光线；</li>
+<li><strong>secondary ray</strong>：在交点处生成的反射/折射光线；</li>
+<li><strong>shadow ray</strong>：指向光源、用于判断阴影的光线。</li>
+</ul>
+<p>递归过程可以理解为：</p>
+<pre><code>color = local_shading(point, normal, view, light)
+if material has reflection:
+    color += reflectivity * trace(reflected_ray, depth+1)
+if material has refraction:
+    color += transmittance * trace(refracted_ray, depth+1)
+</code></pre>
+<p>实际实现必须设置<strong>最大递归深度</strong>，否则光线会在两个镜面之间无限反弹。课件也提到 Whitted 在 1979 年用 VAX 机器渲染一张图需要 74 分钟，而 2012 年 GPU 只需 30 秒，说明硬件进步对光线追踪的影响。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0012.webp" alt="图注：Whitted 1979 年渲染的球与棋盘格，展示了递归光线追踪能产生反射和折射效果。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.13</span><span>图注：Whitted 1979 年渲染的球与棋盘格，展示了递归光线追踪能产生反射和折射效果。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0017.webp" alt="图注：递归光线追踪中的 primary ray、secondary ray（反射/折射）与 shadow ray 的示意图。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.18</span><span>图注：递归光线追踪中的 primary ray、secondary ray（反射/折射）与 shadow ray 的示意图。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>不限制递归深度：镜面场景会导致无限递归或栈溢出，应设置 max depth（如 5~10）。</p></li><li><p>反射/折射方向计算错误：反射方向应为 \( \mathbf{d} - 2(\mathbf{d}\cdot\mathbf{n})\mathbf{n} \)，注意法线方向归一化。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Ray Tracing 反射可设置最大反弹次数（Max Bounces），类似递归深度限制。</p></li><li><p>Unity HDRP 的 Ray Tracing 也有最大反射次数和降噪设置。</p></li></ul></div><div class="code-wrap"><p class="code-cap">递归光线追踪伪代码（cpp）</p><pre class="code"><code class="lang-cpp">Vec3 trace(Ray ray, int depth) {
+    Hit hit = intersectScene(ray);
+    if (!hit) return background;
+    Vec3 color = localShading(hit, ray);
+    if (depth &lt; MAX_DEPTH) {
+        if (hit.material.reflective) {
+            Ray refl = reflectRay(ray, hit.normal, hit.point);
+            color += hit.material.kr * trace(refl, depth + 1);
+        }
+        if (hit.material.refractive) {
+            Ray refr = refractRay(ray, hit.normal, hit.point, hit.material.ior);
+            color += hit.material.kt * trace(refr, depth + 1);
+        }
+    }
+    return color;
+}</code></pre></div></section><section class="sec" id="s4"><h2><span class="h2-no">04</span><span>4. 光线与隐式曲面求交：球与一般曲面</span></h2><div class="sec-body"><p>光线用参数方程表示：</p>
+<p>\[ \mathbf{r}(t) = \mathbf{o} + t\mathbf{d}, \quad 0 \le t < \infty \]</p>
+<p>其中 \(\mathbf{o}\) 是起点，\(\mathbf{d}\) 是方向（通常归一化），\(t\) 是沿光线的“时间”参数。</p>
+<p><strong>与球求交</strong>：球心 \(\mathbf{c}\)、半径 \(R\)，球面方程为 \((\mathbf{p}-\mathbf{c})\cdot(\mathbf{p}-\mathbf{c}) = R^2\)。将 \(\mathbf{p} = \mathbf{r}(t)\) 代入：</p>
+<p>\[ (\mathbf{o}+t\mathbf{d}-\mathbf{c})\cdot(\mathbf{o}+t\mathbf{d}-\mathbf{c}) = R^2 \]</p>
+<p>展开得到关于 \(t\) 的一元二次方程：</p>
+<p>\[ at^2 + bt + c = 0 \]</p>
+<p>其中 \(a = \mathbf{d}\cdot\mathbf{d}\)，\(b = 2(\mathbf{o}-\mathbf{c})\cdot\mathbf{d}\)，\(c = (\mathbf{o}-\mathbf{c})\cdot(\mathbf{o}-\mathbf{c}) - R^2\)。解出 \(t = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\)，取最小的正实数根。</p>
+<p><strong>与一般隐式曲面求交</strong>：曲面由 \(f(\mathbf{p}) = 0\) 定义，代入光线方程得 \(f(\mathbf{o}+t\mathbf{d}) = 0\)，解出所有实数正根，取最小者。</p>
+<blockquote>
+<p>直觉：把光线“代入”曲面方程，就变成解一个关于 t 的方程；有几个交点就有几个根。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0021.webp" alt="图注：光线与球求交的几何示意——将光线方程代入球方程，得到关于 t 的二次方程。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.22</span><span>图注：光线与球求交的几何示意——将光线方程代入球方程，得到关于 t 的二次方程。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>忘记检查判别式 \(b^2-4ac\)：小于 0 表示无交点，等于 0 表示相切。</p></li><li><p>只取一个根：二次方程可能有两个正根，应取较小的正根（最近交点）。</p></li><li><p>方向向量未归一化：此时 \(a \neq 1\)，公式仍成立但 t 的物理意义不同，建议归一化。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Sphere Trace 用于碰撞检测，本质也是光线与球求交的变体。</p></li><li><p>Unity 的 Physics.SphereCast 类似。</p></li></ul></div></section><section class="sec" id="s5"><h2><span class="h2-no">05</span><span>5. 光线与三角形求交：平面法 + 重心坐标</span></h2><div class="sec-body"><p>三角形是最基本的渲染图元，光线与三角形求交是光线追踪的核心操作。课件给出两种思路：</p>
+<p><strong>思路一：先求与平面的交点，再判断是否在三角形内。</strong></p>
+<p>平面由法线 \(\mathbf{N}\) 和平面上一点 \(\mathbf{p}_0\) 定义，平面方程为：</p>
+<p>\[ (\mathbf{p} - \mathbf{p}_0)\cdot\mathbf{N} = 0 \]</p>
+<p>将光线 \(\mathbf{p} = \mathbf{o} + t\mathbf{d}\) 代入：</p>
+<p>\[ (\mathbf{o} + t\mathbf{d} - \mathbf{p}_0)\cdot\mathbf{N} = 0 \]</p>
+<p>解得：</p>
+<p>\[ t = \frac{(\mathbf{p}_0 - \mathbf{o})\cdot\mathbf{N}}{\mathbf{d}\cdot\mathbf{N}} \]</p>
+<p>要求 \(t \ge 0\) 且 \(\mathbf{d}\cdot\mathbf{N} \ne 0\)（否则光线与平面平行）。得到交点后，用重心坐标或叉积判断点是否在三角形内。</p>
+<p><strong>思路二：Möller–Trumbore 算法</strong>（课件提到，直接给出重心坐标）：</p>
+<p>该算法直接解出 \(t\) 和重心坐标 \((b_1, b_2)\)，若 \(b_1 \ge 0\)、\(b_2 \ge 0\)、\(b_1 + b_2 \le 1\) 且 \(t \ge 0\)，则交点在三角形内。它比“先平面后判断”更快，是工程中的标准做法。</p>
+<blockquote>
+<p>直觉：平面求交是“先找到无限大平面上的点”，再问“这个点在不在三角形里”；Möller–Trumbore 则一步到位。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0026.webp" alt="图注：平面的点法式方程，是光线与平面求交的基础。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.27</span><span>图注：平面的点法式方程，是光线与平面求交的基础。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0028.webp" alt="图注：Möller–Trumbore 算法直接给出重心坐标，用于判断交点是否在三角形内。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.29</span><span>图注：Möller–Trumbore 算法直接给出重心坐标，用于判断交点是否在三角形内。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>光线与平面平行时 \(\mathbf{d}\cdot\mathbf{N}=0\)：会导致除零，应提前判断并返回无交点。</p></li><li><p>忘记检查 \(t \ge 0\)：可能得到三角形在光线背后的交点。</p></li><li><p>重心坐标判断条件写错：应为 \(b_1 \ge 0\)、\(b_2 \ge 0\)、\(b_1 + b_2 \le 1\)（对应顶点顺序可能不同，需确认）。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Line Trace（射线检测）底层使用三角形求交，Möller–Trumbore 是常见实现。</p></li><li><p>Unity 的 Physics.Raycast 也基于类似几何求交。</p></li></ul></div><div class="code-wrap"><p class="code-cap">Möller–Trumbore 算法核心（伪代码）（cpp）</p><pre class="code"><code class="lang-cpp">bool rayTriangleIntersect(Ray ray, Triangle tri, float&amp; t, float&amp; b1, float&amp; b2) {
+    Vec3 e1 = tri.v1 - tri.v0;
+    Vec3 e2 = tri.v2 - tri.v0;
+    Vec3 pvec = cross(ray.d, e2);
+    float det = dot(e1, pvec);
+    if (fabs(det) &lt; EPS) return false; // 平行
+    float invDet = 1.0f / det;
+    Vec3 tvec = ray.o - tri.v0;
+    b1 = dot(tvec, pvec) * invDet;
+    if (b1 &lt; 0 || b1 &gt; 1) return false;
+    Vec3 qvec = cross(tvec, e1);
+    b2 = dot(ray.d, qvec) * invDet;
+    if (b2 &lt; 0 || b1 + b2 &gt; 1) return false;
+    t = dot(e2, qvec) * invDet;
+    return t &gt; 0;
+}</code></pre></div></section><section class="sec" id="s6"><h2><span class="h2-no">06</span><span>6. 包围盒（AABB）加速：让求交变快</span></h2><div class="sec-body"><p>朴素光线追踪对每个像素、每条光线都要与场景中所有三角形求交，复杂度为 #像素 × #三角形 × #反弹次数，非常慢。课件用 70 万、2000 万三角形的场景说明性能挑战。</p>
+<p><strong>包围盒（Bounding Volume）</strong> 的思路：用一个简单的几何体把复杂物体包起来。如果光线连包围盒都没碰到，就不可能碰到物体；只有碰到包围盒，才进一步测试内部图元。</p>
+<p>最常用的是<strong>轴对齐包围盒（Axis-Aligned Bounding Box, AABB）</strong>：盒子的每条边都平行于 x、y、z 轴。这样求交计算可以大幅简化。</p>
+<p><strong>光线与 AABB 求交</strong>：把 3D 盒子看成三对无限大的平板（slab）的交集。对每一对平板，计算光线进入和离开的 \(t_{\min}\) 和 \(t_{\max}\)（负值也保留）。则：</p>
+<p>\[ t_{\text{enter}} = \max\{t_{\min}\}, \quad t_{\text{exit}} = \min\{t_{\max}\} \]</p>
+<p>若 \(t_{\text{enter}} < t_{\text{exit}}\) 且 \(t_{\text{exit}} \ge 0\)，则光线与盒子相交。</p>
+<ul>
+<li>若 \(t_{\text{exit}} < 0\)：盒子在光线背后，无交点。</li>
+<li>若 \(t_{\text{exit}} \ge 0\) 且 \(t_{\text{enter}} < 0\)：光线起点在盒子内部，有交点。</li>
+</ul>
+<p><strong>为什么用轴对齐？</strong> 对于垂直于 x 轴的平板，求交公式简化为 \(t = \frac{p_x - o_x}{d_x}\)，只需一次减法和一次除法，比一般平面求交快得多。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0036.webp" alt="图注：2D 示例下光线与 AABB 的 slab 求交——分别计算 x、y 方向的 t 区间，取交集。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.37</span><span>图注：2D 示例下光线与 AABB 的 slab 求交——分别计算 x、y 方向的 t 区间，取交集。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L13/p0038.webp" alt="图注：光线与 AABB 相交的判定条件：t_enter &lt; t_exit 且 t_exit &gt;= 0。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.39</span><span>图注：光线与 AABB 相交的判定条件：t_enter &lt; t_exit 且 t_exit &gt;= 0。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>忘记处理 t 为负的情况：t_exit &lt; 0 表示盒子在光线背后，不应算相交。</p></li><li><p>只检查 t_enter &lt; t_exit 而忽略 t_exit &gt;= 0：可能把背后的盒子误判为相交。</p></li><li><p>光线方向分量为 0 时除以零：需要特殊处理（平行于 slab 时，若起点在 slab 外则无交点）。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Nanite 和 Lumen 内部使用层次包围盒（BVH）加速光线求交。</p></li><li><p>Unity 的 Ray Tracing 加速结构（Acceleration Structure）也是基于 BVH。</p></li></ul></div><div class="code-wrap"><p class="code-cap">光线与 AABB 求交（slab 方法）（cpp）</p><pre class="code"><code class="lang-cpp">bool intersectAABB(Ray ray, AABB box, float&amp; tEnter, float&amp; tExit) {
+    tEnter = -INF; tExit = INF;
+    for (int i = 0; i &lt; 3; ++i) {
+        if (fabs(ray.d[i]) &lt; EPS) {
+            if (ray.o[i] &lt; box.min[i] || ray.o[i] &gt; box.max[i]) return false;
+        } else {
+            float t1 = (box.min[i] - ray.o[i]) / ray.d[i];
+            float t2 = (box.max[i] - ray.o[i]) / ray.d[i];
+            if (t1 &gt; t2) swap(t1, t2);
+            tEnter = max(tEnter, t1);
+            tExit  = min(tExit,  t2);
+            if (tEnter &gt; tExit) return false;
+        }
+    }
+    return tExit &gt;= 0;
+}</code></pre></div></section><h2><span>引擎对照表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>概念 / 效果</th><th>Unreal Engine</th><th>Unity</th></tr></thead><tbody><tr><td><p>光线追踪阴影</p></td><td><p>Ray Tracing Shadows（项目设置中开启）</p></td><td><p>HDRP Ray Tracing Shadows</p></td></tr><tr><td><p>光线追踪反射</p></td><td><p>Ray Tracing Reflections / Lumen Reflections</p></td><td><p>HDRP Ray Tracing Reflections</p></td></tr><tr><td><p>全局光照</p></td><td><p>Lumen（软件/硬件光追混合）</p></td><td><p>HDRP Ray Tracing GI / SSGI</p></td></tr><tr><td><p>光线求交加速结构</p></td><td><p>Nanite 的 BVH、Ray Tracing Acceleration Structure</p></td><td><p>Ray Tracing Acceleration Structure</p></td></tr><tr><td><p>射线检测（游戏逻辑）</p></td><td><p>Line Trace / Sphere Trace</p></td><td><p>Physics.Raycast / SphereCast</p></td></tr></tbody></table></div><h2><span>术语双语表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>English</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>Ray Tracing</td><td>光线追踪</td><td><p>从眼睛发射光线并递归追踪光路，以计算全局光照效果。</p></td></tr><tr><td>Ray Casting</td><td>光线投射</td><td><p>每个像素发一条光线，求最近交点并做局部着色。</p></td></tr><tr><td>Whitted-Style Ray Tracing</td><td>Whitted 风格光线追踪</td><td><p>在交点处递归发射反射/折射光线的经典光线追踪算法。</p></td></tr><tr><td>Primary Ray</td><td>主光线</td><td><p>从眼睛出发的第一条光线。</p></td></tr><tr><td>Secondary Ray</td><td>次级光线</td><td><p>在交点处生成的反射或折射光线。</p></td></tr><tr><td>Shadow Ray</td><td>阴影光线</td><td><p>从交点指向光源、用于判断可见性的光线。</p></td></tr><tr><td>AABB</td><td>轴对齐包围盒</td><td><p>边平行于坐标轴的包围盒，用于加速光线求交。</p></td></tr><tr><td>Möller–Trumbore</td><td>Möller–Trumbore 算法</td><td><p>快速计算光线与三角形交点及重心坐标的算法。</p></td></tr><tr><td>Barycentric Coordinates</td><td>重心坐标</td><td><p>用三个顶点权重表示三角形内点的方法。</p></td></tr><tr><td>Reciprocity</td><td>光路可逆性</td><td><p>光线路径反转后物理规律不变，因此可从眼睛反向追踪。</p></td></tr></tbody></table></div><h2><span>课后练习</span></h2><div class="quiz"><p class="quiz-q"><span class="q-no">01</span><span><p>光栅化为什么难以处理软阴影和间接光照？光线追踪如何解决？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从局部着色 vs 全局光路的角度思考。</p></p><p class="quiz-a"><p>光栅化是局部着色，每个像素只考虑直接光源，无法知道光源上各点的可见性（软阴影）或光线多次反弹后的能量（间接光照）。光线追踪从眼睛发射光线，在交点处可向光源发射 shadow ray 判断遮挡，并递归发射反射/折射光线收集全局光路，因此能自然处理这些效果。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">02</span><span><p>光线起点为 \(\mathbf{o}=(0,0,0)\)，方向 \(\mathbf{d}=(0,0,-1)\)（已归一化），球心 \(\mathbf{c}=(0,0,-5)\)，半径 \(R=1\)。求最近交点对应的 t。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>代入二次方程，取最小正根。</p></p><p class="quiz-a"><p>方程：\((\mathbf{o}+t\mathbf{d}-\mathbf{c})\cdot(\mathbf{o}+t\mathbf{d}-\mathbf{c})=R^2\)。\(\mathbf{o}-\mathbf{c}=(0,0,5)\)，\(\mathbf{d}=(0,0,-1)\)。\(a=1\)，\(b=2(0,0,5)\cdot(0,0,-1)=-10\)，\(c=25-1=24\)。判别式 \(b^2-4ac=100-96=4\)。\(t=(10\pm 2)/2\)，得 \(t=4\) 或 \(t=6\)。最近交点为 \(t=4\)。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">03</span><span><p>光线与 AABB 求交时，为什么取 \(t_{\text{enter}}=\max\{t_{\min}\}\)、\(t_{\text{exit}}=\min\{t_{\max}\}\)？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从“进入所有 slab 才算进入盒子”和“离开任一 slab 就离开盒子”理解。</p></p><p class="quiz-a"><p>盒子是三对 slab 的交集。光线必须同时进入三对 slab 才算进入盒子，因此进入时间是各对 slab 进入时间的最大值；而只要离开任意一对 slab 就离开了盒子，因此离开时间是各对 slab 离开时间的最小值。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">04</span><span><p>在 UE 或 Unity 中，哪些功能使用了光线追踪？请举出至少两个，并说明它们对应本讲的哪个概念。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>考虑阴影、反射、全局光照。</p></p><p class="quiz-a"><p>例如 UE 的 Ray Tracing Shadows 对应 shadow ray；Ray Tracing Reflections 对应反射光线；Lumen 的全局光照对应间接光照的递归光线追踪。Unity HDRP 的 Ray Tracing 也提供阴影、反射、GI。</p></p></details></div><nav class="pager"><a class="cta prev" href="../GAMES101/101_L12.html"><span class="dir"><small>← 上一讲</small><b>L12 几何处理与阴影</b></span></a><a class="cta next" href="../GAMES101/101_L14.html"><span class="dir"><small>下一讲 →</small><b>L14 加速结构与辐射度量</b></span></a></nav><footer class="page-foot"><span>本手册基于 GAMES101 课件整理，仅供个人学习使用。</span><span>课件版权归原作者与课程组所有。</span><span><a href="../index.html">手册首页</a> · <a href="../GAMES101/index.html">GAMES101 课程总览</a></span></footer></article></main></div><div class="reading-bar" id="reading-bar" aria-hidden="true"></div><div class="search-overlay" id="search-overlay"><div class="search-panel" role="dialog" aria-modal="true" aria-label="搜索手册"><div class="search-input-row"><span class="ico" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索知识点、术语、常见坑、讲次…" autocomplete="off" aria-label="搜索关键词"><kbd>Esc</kbd></div><div class="search-list" id="search-list"></div><div class="search-hint"><span>↑↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div></div></div><div class="lightbox" id="lightbox" aria-hidden="true"></div><script src="../assets/katex/katex.min.js"></script><script src="../assets/katex/contrib/auto-render.min.js"></script><script src="../assets/search-index.js"></script><script src="../assets/app.js"></script><script>document.addEventListener("DOMContentLoaded",function(){if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:false});});</script></body></html>

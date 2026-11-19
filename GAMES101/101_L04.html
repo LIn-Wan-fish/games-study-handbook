@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-tone="1" data-root="../">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 4 讲：变换（续）——观测变换与投影 · GAMES 学习手册</title>
+<meta name="description" content="从三维变换出发，讲清相机如何把世界摆到眼前，再把三维场景压成二维图像。">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230066cc'/%3E%3Ctext x='16' y='22' font-family='-apple-system,Segoe UI,sans-serif' font-size='17' font-weight='800' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var t = q === 'light' || q === 'dark' ? q : localStorage.getItem('theme');
+    var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+</script>
+</head><div class="bg-aura" aria-hidden="true"></div><header class="topbar"><div class="topbar-left"><a class="nav-pill brand-pill" href="../index.html" aria-label="GAMES 学习手册首页"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-text"><b>GAMES 学习手册</b><small>计算机图形学 · 3A 游戏开发</small></span></a><span class="nav-pill crumb-pill"><a href="../index.html">首页</a> / <a href="../GAMES101/index.html">GAMES101</a> / <b>观测变换与投影</b></span></div><nav class="topbar-center seg-tabs" aria-label="课程切换"><a class="seg-tab active" href="../GAMES101/index.html" data-tone="1"><span class="seg-code">GAMES101</span></a><a class="seg-tab" href="../GAMES104/index.html" data-tone="2"><span class="seg-code">GAMES104</span></a><a class="seg-tab" href="../GAMES202/index.html" data-tone="3"><span class="seg-code">GAMES202</span></a><a class="seg-tab" href="../GAMES105/index.html" data-tone="4"><span class="seg-code">GAMES105</span></a></nav><div class="topbar-right"><button class="topbar-ctl search-btn" type="button" data-search-open aria-label="搜索知识点"><span class="s-ico" aria-hidden="true">⌕</span><span class="s-label">搜索</span><kbd>/</kbd></button><button class="topbar-ctl theme-btn" type="button" data-theme-toggle aria-label="切换主题"><span aria-hidden="true">◐</span><span class="t-label" data-theme-label>浅色</span></button><button class="topbar-ctl print-btn" type="button" data-print aria-label="打印本页"><span class="p-ico" aria-hidden="true">⎙</span><span class="p-label">打印</span></button><button class="topbar-ctl menu-btn" type="button" data-side-toggle aria-label="打开目录" aria-expanded="false">☰</button></div></header><div class="shell-body"><aside class="sidebar material" aria-label="目录"><div class="side-block"><p class="sidebar-h">本讲目录</p><ul class="toc page-toc"><li><a href="#s1">1. 三维空间里的齐次坐标与仿射变换</a></li><li><a href="#s2">2. 三维旋转：欧拉角与绕任意轴旋转</a></li><li><a href="#s3">3. 视图变换：把相机搬到原点</a></li><li><a href="#s4">4. 正交投影：把长方体压成标准立方体</a></li><li><a href="#s5">5. 透视投影：先挤压视锥，再做正交</a></li></ul></div><div class="side-block"><p class="sidebar-h">全部讲次<span class="count">22 讲</span></p><ul class="toc lecture-toc"><li><a href="../GAMES101/index.html"><span class="lec-no">◎</span><span>课程总览</span></a></li><li><a class="" href="../GAMES101/101_L01.html"><span class="lec-no">L01</span><span>课程总览</span></a></li><li><a class="" href="../GAMES101/101_L02.html"><span class="lec-no">L02</span><span>线性代数复习</span></a></li><li><a class="" href="../GAMES101/101_L03.html"><span class="lec-no">L03</span><span>2D 变换与齐次坐标</span></a></li><li><a class="active" href="../GAMES101/101_L04.html"><span class="lec-no">L04</span><span>观测变换与投影</span></a></li><li><a class="" href="../GAMES101/101_L05.html"><span class="lec-no">L05</span><span>光栅化（一）三角形与采样</span></a></li><li><a class="" href="../GAMES101/101_L06.html"><span class="lec-no">L06</span><span>反走样与深度缓冲</span></a></li><li><a class="" href="../GAMES101/101_L07.html"><span class="lec-no">L07</span><span>着色（一）Blinn-Phong</span></a></li><li><a class="" href="../GAMES101/101_L08.html"><span class="lec-no">L08</span><span>着色（一）Blinn-Phong</span></a></li><li><a class="" href="../GAMES101/101_L09.html"><span class="lec-no">L09</span><span>纹理映射与重心坐标</span></a></li><li><a class="" href="../GAMES101/101_L10.html"><span class="lec-no">L10</span><span>几何（一）隐式与显式</span></a></li><li><a class="" href="../GAMES101/101_L11.html"><span class="lec-no">L11</span><span>贝塞尔曲线与曲面</span></a></li><li><a class="" href="../GAMES101/101_L12.html"><span class="lec-no">L12</span><span>几何处理与阴影</span></a></li><li><a class="" href="../GAMES101/101_L13.html"><span class="lec-no">L13</span><span>光线追踪（一）</span></a></li><li><a class="" href="../GAMES101/101_L14.html"><span class="lec-no">L14</span><span>加速结构与辐射度量</span></a></li><li><a class="" href="../GAMES101/101_L15.html"><span class="lec-no">L15</span><span>光传输与渲染方程</span></a></li><li><a class="" href="../GAMES101/101_L16.html"><span class="lec-no">L16</span><span>路径追踪</span></a></li><li><a class="" href="../GAMES101/101_L17.html"><span class="lec-no">L17</span><span>材质与外观</span></a></li><li><a class="" href="../GAMES101/101_L18.html"><span class="lec-no">L18</span><span>高级渲染专题</span></a></li><li><a class="" href="../GAMES101/101_L19.html"><span class="lec-no">L19</span><span>相机与镜头</span></a></li><li><a class="" href="../GAMES101/101_L20.html"><span class="lec-no">L20</span><span>颜色与感知</span></a></li><li><a class="" href="../GAMES101/101_L21.html"><span class="lec-no">L21</span><span>动画</span></a></li><li><a class="" href="../GAMES101/101_L22.html"><span class="lec-no">L22</span><span>动画（续）单粒子与流体</span></a></li></ul></div><div class="side-foot">基于 GAMES101 课件整理 · 仅供个人学习<br><a href="../index.html">← 返回手册首页</a></div></aside><div class="side-scrim"></div><main class="page"><article class="article"><header class="ch-head"><span class="ch-course">GAMES101 · 现代计算机图形学入门</span><h1 class="ch-title">第 4 讲：变换（续）——观测变换与投影</h1><p class="ch-sub">从三维变换出发，讲清相机如何把世界摆到眼前，再把三维场景压成二维图像。</p><div class="ch-meta"><span class="chip">课件 <b>37</b> 页</span><span class="chip">精讲 <b>5</b> 节</span><span class="chip">术语 <b>9</b> 条</span><span class="chip">练习 <b>5</b> 道</span></div></header><div class="objectives"><div class="callout key"><p class="callout-h">◆ 学完这一讲，你应该能</p><ul><li><p>能写出三维仿射变换的齐次坐标矩阵，并说明线性变换与平移的复合顺序。</p></li><li><p>能解释欧拉角与 Rodrigues 旋转公式各自的作用和适用场景。</p></li><li><p>能推导视图矩阵 M_view，把任意相机变换到原点、朝 -Z、上方向为 +Y 的标准状态。</p></li><li><p>能写出正交投影矩阵 M_ortho，把任意长方体映射到标准立方体 [-1,1]^3。</p></li><li><p>能推导透视投影矩阵 M_persp，理解“先挤压视锥、再做正交投影”的两步法。</p></li></ul></div></div><div class="keybox"><p class="keybox-h">核心结论速记</p><ol class="keybox-list"><li><p>三维点用 (x,y,z,1)、三维向量用 (x,y,z,0) 的齐次坐标表示，仿射变换统一写成 4×4 矩阵。</p></li><li><p>三维旋转可分解为绕 x、y、z 轴的欧拉角旋转，但绕 y 轴的矩阵符号与另外两个相反，因为右手系中 y 轴旋转方向特殊。</p></li><li><p>Rodrigues 公式给出绕任意轴 n 旋转角度 α 的矩阵：cosα·I + (1-cosα)nn^T + sinα·N。</p></li><li><p>视图变换的本质是“把相机搬到原点、朝 -Z、上方向 +Y”，同时所有物体跟着一起变，这样照片不变。</p></li><li><p>M_view = R_view · T_view，其中 T_view 把相机位置移到原点，R_view 把相机的 gaze、up、right 轴对齐到 -Z、+Y、+X。</p></li><li><p>正交投影把长方体 [l,r]×[b,t]×[f,n] 先平移到中心在原点，再缩放成长宽高均为 2 的标准立方体 [-1,1]^3。</p></li><li><p>透视投影分两步：先把视锥“挤压”成长方体（M_persp-&gt;ortho），再做正交投影（M_ortho），最终 M_persp = M_ortho · M_persp-&gt;ortho。</p></li><li><p>透视挤压利用相似三角形和齐次坐标的“同点不同表示”性质，并利用近平面和远平面上的 z 不变来解出矩阵第三行。</p></li></ol></div><section class="sec" id="s1"><h2><span class="h2-no">01</span><span>1. 三维空间里的齐次坐标与仿射变换</span></h2><div class="sec-body"><p>上一讲我们把二维变换写成了 3×3 矩阵，这一讲自然要升到三维。做法完全一样：<strong>再加一维</strong>。</p>
+<ul>
+<li>三维点写成 \((x, y, z, 1)^T\)</li>
+<li>三维向量写成 \((x, y, z, 0)^T\)</li>
+</ul>
+<p>为什么点和向量最后一维不同？因为平移对向量没有意义——向量只表示方向，不该被“搬走”。齐次坐标用最后一维的 0/1 自动区分了这件事。更一般地，\((x, y, z, w)\) 在 \(w \neq 0\) 时表示三维点 \((x/w, y/w, z/w)\)，这为后面的透视投影埋下伏笔。</p>
+<p>三维仿射变换统一写成 4×4 矩阵：
+\[
+\begin{pmatrix} x' \\ y' \\ z' \\ 1 \end{pmatrix}
+=
+\begin{pmatrix}
+a & b & c & t_x \\
+d & e & f & t_y \\
+g & h & i & t_z \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+\begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix}
+\]
+左上角 3×3 负责线性变换（旋转、缩放、错切），最后一列负责平移。</p>
+<p><strong>顺序问题</strong>：矩阵乘法不满足交换律，所以“先线性变换还是先平移”结果不同。课件特意问“What’s the order?”，答案是：按你写的矩阵乘法顺序，<strong>从右往左</strong>作用在点上。若想先缩放再平移，应写成 \(T \cdot S \cdot p\)。</p>
+<p>缩放矩阵和之前一样是对角阵，只是多了 z 分量：\(S(s_x,s_y,s_z) = \mathrm{diag}(s_x,s_y,s_z,1)\)。平移矩阵最后一列是 \((t_x,t_y,t_z,1)^T\)。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0005.webp" alt="图注：三维仿射变换的 4×4 矩阵形式，左上 3×3 是线性部分，最后一列是平移，注意课件在问复合顺序。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.6</span><span>图注：三维仿射变换的 4×4 矩阵形式，左上 3×3 是线性部分，最后一列是平移，注意课件在问复合顺序。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>把向量也写成 (x,y,z,1) 去做平移 → 向量被错误地移动 → 检查向量齐次坐标最后一维应为 0。</p></li><li><p>复合变换顺序写反 → 物体先平移后旋转，结果与预期不符 → 记住矩阵从右往左作用，先写的变换放在最右边。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FMatrix 是 4×4 齐次矩阵，FVector 做 TransformPosition 时默认 w=1，做 TransformVector 时默认 w=0，正好对应点与向量的区别。</p></li><li><p>Unity 中 Matrix4x4.MultiplyPoint 会把点当 w=1 处理，MultiplyVector 把向量当 w=0 处理。</p></li></ul></div></section><section class="sec" id="s2"><h2><span class="h2-no">02</span><span>2. 三维旋转：欧拉角与绕任意轴旋转</span></h2><div class="sec-body"><p>三维旋转比二维复杂，因为可以绕三个轴转。课件先给出绕 x、y、z 轴的基本旋转矩阵：</p>
+<p>\[
+R_x(\alpha)=\begin{pmatrix}1&0&0&0\\0&\cos\alpha&-\sin\alpha&0\\0&\sin\alpha&\cos\alpha&0\\0&0&0&1\end{pmatrix}
+\]
+\[
+R_z(\alpha)=\begin{pmatrix}\cos\alpha&-\sin\alpha&0&0\\\sin\alpha&\cos\alpha&0&0\\0&0&1&0\\0&0&0&1\end{pmatrix}
+\]</p>
+<p>注意 \(R_y\) 的符号“看起来反了”：
+\[
+R_y(\alpha)=\begin{pmatrix}\cos\alpha&0&\sin\alpha&0\\0&1&0&0\\-\sin\alpha&0&\cos\alpha&0\\0&0&0&1\end{pmatrix}
+\]
+这不是笔误。在右手坐标系中，绕 y 轴从 z 转向 x 的方向与绕 x、z 轴的习惯相反，所以 \(\sin\) 项的符号对调。课件专门问“Anything strange about R_y?”，就是提醒这一点。</p>
+<p>把三个基本旋转乘起来，就得到任意欧拉角旋转：
+\[
+R_{xyz}(\alpha,\beta,\gamma)=R_x(\alpha)R_y(\beta)R_z(\gamma)
+\]
+这就是飞行模拟里常说的 roll、pitch、yaw。欧拉角直观、好调，但有万向节死锁（gimbal lock）问题，且旋转顺序不同结果不同。</p>
+<p>如果给定任意旋转轴 \(\mathbf{n}\)（单位向量）和角度 \(\alpha\)，用 <strong>Rodrigues 旋转公式</strong>：
+\[
+R(\mathbf{n},\alpha)=\cos\alpha\, I+(1-\cos\alpha)\,\mathbf{n}\mathbf{n}^T+\sin\alpha\, N
+\]
+其中 \(N\) 是由 \(\mathbf{n}\) 构成的反对称矩阵：
+\[
+N=\begin{pmatrix}0&-n_z&n_y\\n_z&0&-n_x\\-n_y&n_x&0\end{pmatrix}
+\]
+这个公式不需要欧拉角，直接绕任意轴旋转，在动画和物理里很常用。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0007.webp" alt="图注：绕 x、y、z 轴的基本旋转矩阵，重点看 R_y 的符号与另外两个相反。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.8</span><span>图注：绕 x、y、z 轴的基本旋转矩阵，重点看 R_y 的符号与另外两个相反。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0009.webp" alt="图注：Rodrigues 旋转公式，用单位轴 n 和角度 α 直接构造旋转矩阵。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.10</span><span>图注：Rodrigues 旋转公式，用单位轴 n 和角度 α 直接构造旋转矩阵。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>以为 R_y 的符号写错了 → 绕 y 轴旋转方向与直觉相反 → 记住右手系中 y 轴旋转的 sin 项符号对调。</p></li><li><p>欧拉角旋转顺序不固定 → 同样角度不同顺序结果不同 → 明确约定顺序（如先 roll 再 pitch 再 yaw）并保持。</p></li><li><p>Rodrigues 公式中 n 未归一化 → 旋转矩阵不正交、缩放异常 → 使用前对 n 做 normalize。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FRotator 就是欧拉角（Pitch/Yaw/Roll），但内部常转成 FQuat 四元数来避免万向节死锁。</p></li><li><p>Unity 中 Transform.eulerAngles 是欧拉角，旋转计算用 Quaternion，底层等价于轴角/四元数表示。</p></li></ul></div></section><section class="sec" id="s3"><h2><span class="h2-no">03</span><span>3. 视图变换：把相机搬到原点</span></h2><div class="sec-body"><p>拍照分三步：摆好人和背景（模型变换）、找好角度放相机（视图变换）、按下快门（投影变换）。这一节讲第二步。</p>
+<p>相机需要定义三件事：</p>
+<ul>
+<li><strong>位置</strong> \(\tilde{e}\)</li>
+<li><strong>朝向</strong>（gaze direction）\(\hat{g}\)</li>
+<li><strong>上方向</strong> \(\hat{t}\)（假设与朝向垂直）</li>
+</ul>
+<p>关键观察：<strong>如果相机和所有物体一起移动，拍出来的照片是一样的</strong>。所以我们可以“作弊”：把相机搬到原点，上方向对齐 +Y，朝向对齐 -Z，同时让所有物体跟着做同样的变换。这样后续投影就简单了。</p>
+<p>视图矩阵 \(M_{view}\) 要做的是：</p>
+<ol>
+<li>把相机位置 \(\tilde{e}\) 平移到原点；</li>
+<li>把 \(\hat{g}\) 旋转到 -Z；</li>
+<li>把 \(\hat{t}\) 旋转到 +Y；</li>
+<li>把 \(\hat{g} \times \hat{t}\) 旋转到 +X。</li>
+</ol>
+<p>直接写这个旋转很难，因为“把 g 转到 -Z”不是基本旋转。技巧是<strong>先求逆旋转</strong>：逆旋转把 X 转到 \((\hat{g}\times\hat{t})\)、Y 转到 \(\hat{t}\)、Z 转到 \(-\hat{g}\)。而旋转矩阵的逆等于转置，所以：
+\[
+R_{view}^{-1}=\begin{pmatrix}
+x_{\hat{g}\times\hat{t}} & x_{\hat{t}} & x_{-\hat{g}} & 0\\
+y_{\hat{g}\times\hat{t}} & y_{\hat{t}} & y_{-\hat{g}} & 0\\
+z_{\hat{g}\times\hat{t}} & z_{\hat{t}} & z_{-\hat{g}} & 0\\
+0&0&0&1
+\end{pmatrix}
+\]
+取转置就得到 \(R_{view}\)。再左乘平移矩阵 \(T_{view}\)（把 \(\tilde{e}\) 移到原点），最终：
+\[
+M_{view}=R_{view}\,T_{view}
+\]
+课件把模型变换和视图变换合称 <strong>ModelView Transformation</strong>，因为二者经常合并成一个矩阵。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0013.webp" alt="图注：相机与物体一起变换，照片不变——这是视图变换的核心思想。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.14</span><span>图注：相机与物体一起变换，照片不变——这是视图变换的核心思想。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0015.webp" alt="图注：M_view 的构造，先平移再旋转，旋转部分通过求逆再转置得到。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.16</span><span>图注：M_view 的构造，先平移再旋转，旋转部分通过求逆再转置得到。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>gaze 与 up 不垂直 → 构造的旋转矩阵不正交 → 先对 up 做 Gram-Schmidt 正交化，或确保输入垂直。</p></li><li><p>把 R_view 和 T_view 顺序写反 → 相机位置没有被正确搬到原点 → 记住先平移后旋转，即 M_view = R_view · T_view。</p></li><li><p>忘记对 g、t 归一化 → 旋转矩阵含缩放，物体变形 → 使用前统一 normalize。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 CameraComponent 的 Transform 就是相机位置与朝向，渲染时引擎内部会构造等价的 ViewMatrix。</p></li><li><p>Unity 中 Camera.worldToCameraMatrix 就是视图矩阵，约定也是相机看向 -Z、上方向 +Y。</p></li></ul></div></section><section class="sec" id="s4"><h2><span class="h2-no">04</span><span>4. 正交投影：把长方体压成标准立方体</span></h2><div class="sec-body"><p>投影把三维变成二维。正交投影（Orthographic Projection）假设相机在无穷远，平行线保持平行，没有“近大远小”。</p>
+<p>最直观的理解：相机在原点、朝 -Z、上方向 +Y，直接把 z 坐标丢掉，就得到 xy 平面上的图。但这样得到的矩形大小任意，不方便后续处理，所以标准做法是：<strong>把任意长方体映射到标准立方体 \([-1,1]^3\)</strong>。</p>
+<p>给定长方体范围：x 从 \(l\) 到 \(r\)，y 从 \(b\) 到 \(t\)，z 从 \(f\) 到 \(n\)（注意这里 n 是 near，f 是 far，因为朝 -Z 看，near 的 z 值反而更大，所以写 \([f,n]\)）。</p>
+<p>两步：</p>
+<ol>
+<li><strong>平移</strong>：把长方体中心移到原点。中心是 \(((l+r)/2, (b+t)/2, (f+n)/2)\)，所以平移量是负的中心。</li>
+<li><strong>缩放</strong>：把长宽高分别缩放到 2（因为要从区间长度变成 [-1,1] 的长度 2）。缩放因子是 \(2/(r-l)\)、\(2/(t-b)\)、\(2/(n-f)\)。</li>
+</ol>
+<p>合起来：
+\[
+M_{ortho}=
+\begin{pmatrix}
+\frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l}\\
+0 & \frac{2}{t-b} & 0 & -\frac{t+b}{t-b}\\
+0 & 0 & \frac{2}{n-f} & -\frac{n+f}{n-f}\\
+0&0&0&1
+\end{pmatrix}
+\]
+注意课件提醒：因为朝 -Z 看，near 的 z 值比 far 大（\(n > f\)），所以分母 \(n-f\) 是正的，这符合直觉。OpenGL 采用左手坐标系也是为了避免这种反直觉。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0021.webp" alt="图注：正交投影把任意长方体 [l,r]×[b,t]×[f,n] 映射到标准立方体 [-1,1]^3。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.22</span><span>图注：正交投影把任意长方体 [l,r]×[b,t]×[f,n] 映射到标准立方体 [-1,1]^3。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0023.webp" alt="图注：正交投影矩阵，先平移使中心到原点，再缩放使边长为 2。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.24</span><span>图注：正交投影矩阵，先平移使中心到原点，再缩放使边长为 2。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>把 near 和 far 的 z 值搞反 → 分母 n-f 变负，投影翻转 → 记住朝 -Z 看时 near 的 z 更大。</p></li><li><p>缩放因子写成 1/(r-l) 而不是 2/(r-l) → 映射到 [-0.5,0.5] 而不是 [-1,1] → 检查目标区间长度是 2。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中正交相机（Orthographic Camera）常用于 UI 或俯视策略游戏，其投影矩阵就是 M_ortho。</p></li><li><p>Unity 中 Camera.orthographic = true 时使用正交投影，orthographicSize 控制半高。</p></li></ul></div></section><section class="sec" id="s5"><h2><span class="h2-no">05</span><span>5. 透视投影：先挤压视锥，再做正交</span></h2><div class="sec-body"><p>透视投影（Perspective Projection）更符合人眼和相机：近大远小，平行线汇聚于一点。课件引用 Euclid 的“平行线永不相交”说“Euclid was wrong??!!”，其实是透视投影下平行线在图像平面上的投影会相交，这是投影的几何性质，不是欧几里得几何错了。</p>
+<p>透视投影的标准做法分两步：</p>
+<ol>
+<li><strong>挤压（squish）</strong>：把视锥（frustum）压成长方体，近平面不变，远平面不变，中间的点向近平面靠拢。记作 \(M_{persp\to ortho}\)。</li>
+<li><strong>正交投影</strong>：用上一节的 \(M_{ortho}\) 把长方体映射到标准立方体。</li>
+</ol>
+<p>所以：
+\[
+M_{persp}=M_{ortho}\,M_{persp\to ortho}
+\]</p>
+<p>关键是怎么求 \(M_{persp\to ortho}\)。利用相似三角形：视锥中一点 \((x,y,z)\) 在近平面上的投影满足 \(y' = \frac{n}{z}y\)，\(x' = \frac{n}{z}x\)。在齐次坐标下，乘以 z 不改变表示的点：
+\[
+\begin{pmatrix}nx\\ny\\?\\?\end{pmatrix}\sim\begin{pmatrix}x\\y\\z\\1\end{pmatrix}
+\]
+所以矩阵的前两行已经确定：第一行是 \((n,0,0,0)\)，第二行是 \((0,n,0,0)\)。第三行负责 z，设为 \((A,B,0,0)\) 形式（与 x、y 无关）。利用两个条件：</p>
+<ul>
+<li>近平面上的点 z 不变：\(An+B=n\)</li>
+<li>远平面上的点 z 不变：\(Af+B=f\)</li>
+</ul>
+<p>解得：
+\[
+A=n+f,\quad B=-nf
+\]
+于是：
+\[
+M_{persp\to ortho}=
+\begin{pmatrix}
+n&0&0&0\\
+0&n&0&0\\
+0&0&n+f&-nf\\
+0&0&1&0
+\end{pmatrix}
+\]
+最后一行是 \((0,0,1,0)\)，因为齐次坐标的 w 分量要变成 z，这样除以 w 后才得到 \(nx/z\)、\(ny/z\)。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0028.webp" alt="图注：透视投影两步法——先把视锥挤压成长方体，再做正交投影。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.29</span><span>图注：透视投影两步法——先把视锥挤压成长方体，再做正交投影。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0030.webp" alt="图注：利用相似三角形和齐次坐标，得到挤压后 x、y 与原来 x、y、z 的关系。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.31</span><span>图注：利用相似三角形和齐次坐标，得到挤压后 x、y 与原来 x、y、z 的关系。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES101/101_L04/p0035.webp" alt="图注：解出 A = n+f、B = -nf，得到完整的 M_persp-&gt;ortho。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.36</span><span>图注：解出 A = n+f、B = -nf，得到完整的 M_persp-&gt;ortho。</span></figcaption></figure><div class="callout key"><p class="callout-h">补充说明</p><p>课件中 n 表示近平面 z 值，f 表示远平面 z 值；由于朝 -Z 看，n &gt; f，这与 OpenGL 等 API 的约定一致。</p></div><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>忘记最后一行是 (0,0,1,0) → w 分量不对，透视除法失效 → 检查矩阵最后一行。</p></li><li><p>把 A、B 解错（如 A=n-f）→ 近远平面 z 不变的条件不满足 → 用 An+B=n 和 Af+B=f 联立求解。</p></li><li><p>挤压后没有做透视除法（除以 w）→ 图像没有近大远小 → 确保渲染管线在投影后执行齐次除法。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 Perspective Camera 的投影矩阵就是 M_persp，FOV 决定视锥开口大小。</p></li><li><p>Unity 中 Camera.projectionMatrix 在透视模式下就是 M_persp，Camera.fieldOfView 控制垂直 FOV。</p></li></ul></div></section><h2><span>引擎对照表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>概念 / 效果</th><th>Unreal Engine</th><th>Unity</th></tr></thead><tbody><tr><td><p>齐次坐标与仿射变换</p></td><td><p>FMatrix 4×4，TransformPosition/TransformVector 区分点与向量</p></td><td><p>Matrix4x4.MultiplyPoint / MultiplyVector</p></td></tr><tr><td><p>欧拉角旋转</p></td><td><p>FRotator（Pitch/Yaw/Roll）</p></td><td><p>Transform.eulerAngles</p></td></tr><tr><td><p>绕任意轴旋转</p></td><td><p>FQuat::FQuat(Axis, Angle)</p></td><td><p>Quaternion.AngleAxis</p></td></tr><tr><td><p>视图矩阵</p></td><td><p>CameraComponent 的 ViewMatrix</p></td><td><p>Camera.worldToCameraMatrix</p></td></tr><tr><td><p>正交投影</p></td><td><p>Orthographic Camera</p></td><td><p>Camera.orthographic = true</p></td></tr><tr><td><p>透视投影</p></td><td><p>Perspective Camera + FOV</p></td><td><p>Camera.projectionMatrix + fieldOfView</p></td></tr></tbody></table></div><h2><span>术语双语表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>English</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>Homogeneous coordinates</td><td>齐次坐标</td><td><p>用多一维表示点/向量，统一处理平移与投影。</p></td></tr><tr><td>Affine transformation</td><td>仿射变换</td><td><p>线性变换加平移，用 4×4 矩阵表示。</p></td></tr><tr><td>Euler angles</td><td>欧拉角</td><td><p>用绕三个轴的旋转角度描述三维旋转，如 roll/pitch/yaw。</p></td></tr><tr><td>Rodrigues' rotation formula</td><td>Rodrigues 旋转公式</td><td><p>给定单位轴和角度直接构造旋转矩阵。</p></td></tr><tr><td>View transformation</td><td>视图变换</td><td><p>把相机搬到原点、朝 -Z、上方向 +Y，物体跟着变。</p></td></tr><tr><td>Orthographic projection</td><td>正交投影</td><td><p>平行投影，无近大远小，把长方体映射到标准立方体。</p></td></tr><tr><td>Perspective projection</td><td>透视投影</td><td><p>近大远小，平行线汇聚，先挤压视锥再做正交。</p></td></tr><tr><td>Frustum</td><td>视锥</td><td><p>透视相机可见的截头锥体区域。</p></td></tr><tr><td>Canonical cube</td><td>标准立方体</td><td><p>[-1,1]^3，投影后的归一化空间。</p></td></tr></tbody></table></div><h2><span>课后练习</span></h2><div class="quiz"><p class="quiz-q"><span class="q-no">01</span><span><p>写出把点 (1,2,3) 先绕 z 轴旋转 90°，再平移 (1,0,0) 的 4×4 变换矩阵，并计算结果点。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>先旋转后平移，矩阵写成 T·R。</p></p><p class="quiz-a"><p>R_z(90°) = [[0,-1,0,0],[1,0,0,0],[0,0,1,0],[0,0,0,1]]，T = [[1,0,0,1],[0,1,0,0],[0,0,1,0],[0,0,0,1]]，M = T·R = [[0,-1,0,1],[1,0,0,0],[0,0,1,0],[0,0,0,1]]。作用到 (1,2,3,1)：先旋转得 (-2,1,3,1)，再平移得 (-1,1,3,1)，即点 (-1,1,3)。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">02</span><span><p>解释为什么 R_y(α) 的 sin 项符号与 R_x、R_z 相反。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从右手坐标系中绕 y 轴旋转的方向考虑。</p></p><p class="quiz-a"><p>在右手坐标系中，绕 y 轴从 z 轴转向 x 轴的方向与绕 x、z 轴的习惯相反，因此 R_y 中 sin 项的符号对调，写成 [[cos,0,sin],[0,1,0],[-sin,0,cos]] 才能保证旋转方向正确。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">03</span><span><p>给定相机位置 e=(0,0,5)，看向 -Z，上方向 +Y，求视图矩阵 M_view。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>此时相机已在 z 轴上，只需平移。</p></p><p class="quiz-a"><p>gaze g=(0,0,-1)，up t=(0,1,0)，g×t=(1,0,0)。R_view 是单位阵（因为轴已对齐），T_view 把 (0,0,5) 移到原点，即平移 (0,0,-5)。所以 M_view = [[1,0,0,0],[0,1,0,0],[0,0,1,-5],[0,0,0,1]]。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">04</span><span><p>正交投影中，若 l=-2, r=2, b=-1, t=1, n=1, f=-1，写出 M_ortho。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>代入公式，注意 n-f=2。</p></p><p class="quiz-a"><p>M_ortho = [[2/(r-l),0,0,-(r+l)/(r-l)],[0,2/(t-b),0,-(t+b)/(t-b)],[0,0,2/(n-f),-(n+f)/(n-f)],[0,0,0,1]] = [[0.5,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">05</span><span><p>在 UE 或 Unity 中创建一个透视相机，把 FOV 从 90° 改为 60°，观察画面变化，并解释投影矩阵中哪个量变了。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>FOV 变小，视锥变窄。</p></p><p class="quiz-a"><p>FOV 变小后，视锥开口变窄，画面中物体看起来更大（相当于拉近）。投影矩阵中与 x、y 缩放相关的项（如 1/tan(FOV/2)）变大，导致同样的三维点投影到更小的 NDC 范围，再映射到屏幕后显得更大。</p></p></details></div><nav class="pager"><a class="cta prev" href="../GAMES101/101_L03.html"><span class="dir"><small>← 上一讲</small><b>L03 2D 变换与齐次坐标</b></span></a><a class="cta next" href="../GAMES101/101_L05.html"><span class="dir"><small>下一讲 →</small><b>L05 光栅化（一）三角形与采样</b></span></a></nav><footer class="page-foot"><span>本手册基于 GAMES101 课件整理，仅供个人学习使用。</span><span>课件版权归原作者与课程组所有。</span><span><a href="../index.html">手册首页</a> · <a href="../GAMES101/index.html">GAMES101 课程总览</a></span></footer></article></main></div><div class="reading-bar" id="reading-bar" aria-hidden="true"></div><div class="search-overlay" id="search-overlay"><div class="search-panel" role="dialog" aria-modal="true" aria-label="搜索手册"><div class="search-input-row"><span class="ico" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索知识点、术语、常见坑、讲次…" autocomplete="off" aria-label="搜索关键词"><kbd>Esc</kbd></div><div class="search-list" id="search-list"></div><div class="search-hint"><span>↑↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div></div></div><div class="lightbox" id="lightbox" aria-hidden="true"></div><script src="../assets/katex/katex.min.js"></script><script src="../assets/katex/contrib/auto-render.min.js"></script><script src="../assets/search-index.js"></script><script src="../assets/app.js"></script><script>document.addEventListener("DOMContentLoaded",function(){if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:false});});</script></body></html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-tone="2" data-root="../">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 10 讲：物理系统——从刚体到碰撞检测与求解 · GAMES 学习手册</title>
+<meta name="description" content="游戏物理引擎如何用近似与离散时间步模拟刚体运动、检测碰撞并求解约束">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230066cc'/%3E%3Ctext x='16' y='22' font-family='-apple-system,Segoe UI,sans-serif' font-size='17' font-weight='800' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var t = q === 'light' || q === 'dark' ? q : localStorage.getItem('theme');
+    var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+</script>
+</head><div class="bg-aura" aria-hidden="true"></div><header class="topbar"><div class="topbar-left"><a class="nav-pill brand-pill" href="../index.html" aria-label="GAMES 学习手册首页"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-text"><b>GAMES 学习手册</b><small>计算机图形学 · 3A 游戏开发</small></span></a><span class="nav-pill crumb-pill"><a href="../index.html">首页</a> / <a href="../GAMES104/index.html">GAMES104</a> / <b>物理系统</b></span></div><nav class="topbar-center seg-tabs" aria-label="课程切换"><a class="seg-tab" href="../GAMES101/index.html" data-tone="1"><span class="seg-code">GAMES101</span></a><a class="seg-tab active" href="../GAMES104/index.html" data-tone="2"><span class="seg-code">GAMES104</span></a><a class="seg-tab" href="../GAMES202/index.html" data-tone="3"><span class="seg-code">GAMES202</span></a><a class="seg-tab" href="../GAMES105/index.html" data-tone="4"><span class="seg-code">GAMES105</span></a></nav><div class="topbar-right"><button class="topbar-ctl search-btn" type="button" data-search-open aria-label="搜索知识点"><span class="s-ico" aria-hidden="true">⌕</span><span class="s-label">搜索</span><kbd>/</kbd></button><button class="topbar-ctl theme-btn" type="button" data-theme-toggle aria-label="切换主题"><span aria-hidden="true">◐</span><span class="t-label" data-theme-label>浅色</span></button><button class="topbar-ctl print-btn" type="button" data-print aria-label="打印本页"><span class="p-ico" aria-hidden="true">⎙</span><span class="p-label">打印</span></button><button class="topbar-ctl menu-btn" type="button" data-side-toggle aria-label="打开目录" aria-expanded="false">☰</button></div></header><div class="shell-body"><aside class="sidebar material" aria-label="目录"><div class="side-block"><p class="sidebar-h">本讲目录</p><ul class="toc page-toc"><li><a href="#s1">物理系统在游戏里到底解决什么问题</a></li><li><a href="#s2">物理世界与视觉世界：Actor 与形状</a></li><li><a href="#s3">形状属性：质量、质心、摩擦与弹性</a></li><li><a href="#s4">力、冲量与运动积分：为什么半隐式欧拉是默认</a></li><li><a href="#s5">刚体转动：角速度、转动惯量与力矩</a></li><li><a href="#s6">碰撞检测：Broad Phase 与 Narrow Phase</a></li><li><a href="#s7">碰撞求解与场景查询：让物体分开并回答“打中了没”</a></li><li><a href="#s8">工程优化：休眠、岛、连续碰撞与确定性</a></li></ul></div><div class="side-block"><p class="sidebar-h">全部讲次<span class="count">20 讲</span></p><ul class="toc lecture-toc"><li><a href="../GAMES104/index.html"><span class="lec-no">◎</span><span>课程总览</span></a></li><li><a class="" href="../GAMES104/104_L01.html"><span class="lec-no">L01</span><span>游戏引擎导论</span></a></li><li><a class="" href="../GAMES104/104_L02.html"><span class="lec-no">L02</span><span>引擎分层架构</span></a></li><li><a class="" href="../GAMES104/104_L03.html"><span class="lec-no">L03</span><span>构建游戏世界</span></a></li><li><a class="" href="../GAMES104/104_L04.html"><span class="lec-no">L04</span><span>渲染总览</span></a></li><li><a class="" href="../GAMES104/104_L05.html"><span class="lec-no">L05</span><span>渲染：光照材质着色器</span></a></li><li><a class="" href="../GAMES104/104_L06.html"><span class="lec-no">L06</span><span>渲染：地形/天空/云</span></a></li><li><a class="" href="../GAMES104/104_L07.html"><span class="lec-no">L07</span><span>渲染管线与后处理</span></a></li><li><a class="" href="../GAMES104/104_L08.html"><span class="lec-no">L08</span><span>动画系统</span></a></li><li><a class="" href="../GAMES104/104_L09.html"><span class="lec-no">L09</span><span>动画系统进阶</span></a></li><li><a class="active" href="../GAMES104/104_L10.html"><span class="lec-no">L10</span><span>物理系统</span></a></li><li><a class="" href="../GAMES104/104_L11.html"><span class="lec-no">L11</span><span>物理系统应用</span></a></li><li><a class="" href="../GAMES104/104_L12.html"><span class="lec-no">L12</span><span>粒子与音频</span></a></li><li><a class="" href="../GAMES104/104_L14.html"><span class="lec-no">L14</span><span>工具链</span></a></li><li><a class="" href="../GAMES104/104_L15.html"><span class="lec-no">L15</span><span>玩法系统 Gameplay</span></a></li><li><a class="" href="../GAMES104/104_L16.html"><span class="lec-no">L16</span><span>游戏 AI 基础</span></a></li><li><a class="" href="../GAMES104/104_L17.html"><span class="lec-no">L17</span><span>进阶 AI 与机器学习</span></a></li><li><a class="" href="../GAMES104/104_L18.html"><span class="lec-no">L18</span><span>在线游戏架构</span></a></li><li><a class="" href="../GAMES104/104_L19.html"><span class="lec-no">L19</span><span>在线游戏架构（下）</span></a></li><li><a class="" href="../GAMES104/104_L20.html"><span class="lec-no">L20</span><span>面向数据编程与 Job Syst</span></a></li><li><a class="" href="../GAMES104/104_L21.html"><span class="lec-no">L21</span><span>动态全局光照与 Lumen</span></a></li></ul></div><div class="side-foot">基于 GAMES104 课件整理 · 仅供个人学习<br><a href="../index.html">← 返回手册首页</a></div></aside><div class="side-scrim"></div><main class="page"><article class="article"><header class="ch-head"><span class="ch-course">GAMES104 · 现代游戏引擎：理论、实践与架构</span><h1 class="ch-title">第 10 讲：物理系统——从刚体到碰撞检测与求解</h1><p class="ch-sub">游戏物理引擎如何用近似与离散时间步模拟刚体运动、检测碰撞并求解约束</p><div class="ch-meta"><span class="chip">课件 <b>131</b> 页</span><span class="chip">精讲 <b>8</b> 节</span><span class="chip">术语 <b>10</b> 条</span><span class="chip">练习 <b>5</b> 道</span></div></header><div class="objectives"><div class="callout key"><p class="callout-h">◆ 学完这一讲，你应该能</p><ul><li><p>能说清物理世界与视觉世界分离的设计原因，以及静态、动态、运动学、触发器四类 Actor 的用途与区别</p></li><li><p>能解释常见碰撞形状（球、胶囊、盒、凸包、三角网格、高度场）的适用场景与限制</p></li><li><p>能写出显式、隐式、半隐式欧拉积分公式，并说明为什么半隐式欧拉是游戏物理的默认选择</p></li><li><p>能描述刚体角速度、转动惯量、角动量、力矩之间的关系，并解释台球碰撞中冲量的作用</p></li><li><p>能画出碰撞检测的两阶段流程（Broad Phase / Narrow Phase），并说出 BVH、Sort and Sweep、GJK、SAT 的核心思想</p></li><li><p>能说明碰撞求解的三种思路（罚力、速度约束、位置约束）以及顺序冲量法的基本流程</p></li><li><p>能列举场景查询（Raycast、Sweep、Overlap）的用途，并解释连续碰撞检测、休眠、岛、确定性模拟要解决的问题</p></li></ul></div></div><div class="keybox"><p class="keybox-h">核心结论速记</p><ol class="keybox-list"><li><p>物理世界是视觉世界的简化近似，用简单形状包裹复杂模型，追求实时而非绝对精确。</p></li><li><p>Actor 分为静态、动态、运动学、触发器四类：动态受力和冲量影响，运动学由动画或脚本驱动但能推动动态物体，触发器只检测不阻挡。</p></li><li><p>形状选择要兼顾简单与贴合：球、胶囊、盒最常用，凸包用于复杂刚体，三角网格只能用于静态物体，高度场用于地形。</p></li><li><p>显式欧拉会发散，隐式欧拉会螺旋衰减，半隐式欧拉（先更新速度再更新位置）在游戏中最常用且稳定。</p></li><li><p>刚体转动需要角速度、转动惯量、角动量、力矩，转动惯量描述质量分布，力矩等于位置叉乘力。</p></li><li><p>碰撞检测分两阶段：Broad Phase 用 AABB 快速筛出可能重叠的物体对，Narrow Phase 用 GJK/SAT 等精确计算接触点和法线。</p></li><li><p>碰撞求解主流是速度约束加顺序冲量法，通过迭代施加冲量消除穿透方向的速度。</p></li><li><p>工程上还要处理休眠、岛、连续碰撞检测（TOI）和确定性模拟，以兼顾性能与正确性。</p></li></ol></div><section class="sec" id="s1"><h2><span class="h2-no">01</span><span>物理系统在游戏里到底解决什么问题</span></h2><div class="sec-body"><p>物理系统是游戏引擎中最“反直觉”的模块之一：它模拟的是现实世界的规律，但目标却不是物理精确，而是<strong>看起来对、跑得快、可控</strong>。课件开篇用四张图概括了物理在游戏中的四类用途：</p>
+<ul>
+<li><strong>物理直觉（Physical Intuition）</strong>：让玩家凭生活经验就能预测物体行为，比如箱子被推会滑动、球会弹跳。</li>
+<li><strong>动态环境（Dynamic Environment）</strong>：场景中的物体可以被破坏、堆叠、推动，而不是一张静态背景图。</li>
+<li><strong>真实交互（Realistic Interaction）</strong>：角色与场景、载具与地面之间的互动要符合预期。</li>
+<li><strong>艺术表现（Artistic）</strong>：物理也可以被“夸张”或“削弱”，服务于演出效果，比如慢动作、夸张的爆炸。</li>
+</ul>
+<p>这一讲的主线是：先建立<strong>物理世界与视觉世界分离</strong>的认知，再讲 Actor 与形状，然后讲运动积分、刚体动力学、碰撞检测、碰撞求解，最后讲场景查询与工程优化。</p>
+<blockquote>
+<p>关键心态：物理引擎不是仿真软件，它是游戏循环里每帧都要跑完的一个子系统。所有算法选择都是“精度 vs 速度”的折中。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0003.webp" alt="图注：物理直觉——玩家能凭生活经验预测物体运动，这是物理系统最基本的目标。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.4</span><span>图注：物理直觉——玩家能凭生活经验预测物体运动，这是物理系统最基本的目标。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0009.webp" alt="图注：视觉世界与物理世界的对比：左边是精细模型，右边是简单碰撞形状的包裹。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.10</span><span>图注：视觉世界与物理世界的对比：左边是精细模型，右边是简单碰撞形状的包裹。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>把物理引擎当仿真软件 → 追求绝对精确导致性能崩溃 → 记住游戏物理是近似，形状和步长都可以妥协。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：物理由 Chaos 物理引擎驱动，项目设置里可调子步长（Substepping）和固定帧率。</p></li><li><p>Unity：物理由 PhysX 驱动（DOTS 下是 Unity Physics），Project Settings &gt; Time &gt; Fixed Timestep 控制物理步长。</p></li></ul></div></section><section class="sec" id="s2"><h2><span class="h2-no">02</span><span>物理世界与视觉世界：Actor 与形状</span></h2><div class="sec-body"><p>游戏里你看到的模型（视觉世界）和物理引擎计算的对象（物理世界）是<strong>两套数据</strong>。物理世界只关心简化后的碰撞形状和运动状态，渲染世界关心顶点、材质、骨骼。两者通过同步机制关联：物理算完位置后，把变换写回渲染对象。</p>
+<p>物理世界的基本单位叫 <strong>Actor（物理 actor）</strong>，每个 Actor 至少包含：</p>
+<ul>
+<li>一个或多个<strong>形状（Shape）</strong>，定义碰撞几何；</li>
+<li><strong>质量、密度、摩擦、弹性</strong>等材质属性；</li>
+<li><strong>位置、朝向、线速度、角速度</strong>等运动状态；</li>
+<li>一个 <strong>Actor 类型</strong>，决定它受不受物理规律影响。</li>
+</ul>
+<p>课件把 Actor 分为四类：</p>
+<ol>
+<li><strong>静态 Actor（Static）</strong>：不动，不受力，但参与碰撞。比如墙壁、地面。</li>
+<li><strong>动态 Actor（Dynamic）</strong>：受重力、力、冲量影响，可以移动和旋转。比如箱子、布娃娃。</li>
+<li><strong>运动学 Actor（Kinematic）</strong>：<strong>不受物理规律驱动</strong>，由动画或脚本直接设置位置/速度，但它能推动动态物体。课件特别提醒：运动学 Actor 是“麻烦制造者”，因为它不遵守物理规律却参与碰撞，容易产生穿透或抖动。</li>
+<li><strong>触发器（Trigger）</strong>：像静态 Actor 一样不移动，但<strong>不阻挡</strong>，只在其他 Actor 进入/离开时发出通知。常用于关卡触发、拾取物。</li>
+</ol>
+<p>形状方面，课件按从简到繁列出：<strong>球（Sphere）</strong>、<strong>胶囊（Capsule）</strong>、<strong>盒（Box）</strong>、<strong>凸包（Convex Mesh）</strong>、<strong>三角网格（Triangle Mesh）</strong>、<strong>高度场（Height Field）</strong>。选择原则是：<strong>简单形状优先</strong>，因为碰撞检测和求解都更快；复杂形状只在必要时用。</p>
+<blockquote>
+<p>重要限制：<strong>动态 Actor 不能用三角网格</strong>。三角网格没有“内部”，动态物体需要明确的体积和惯性，所以只能用凸包或基本形状。三角网格通常只给静态场景用。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0016.webp" alt="图注：四类 Actor 的总结表：静态、动态、运动学、触发器的行为差异。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.17</span><span>图注：四类 Actor 的总结表：静态、动态、运动学、触发器的行为差异。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0024.webp" alt="图注：用简单物理形状包裹复杂模型——近似包裹不需要完美，简单优先。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.25</span><span>图注：用简单物理形状包裹复杂模型——近似包裹不需要完美，简单优先。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>动态物体用了三角网格 → 物理引擎报错或行为异常 → 改用凸包或基本形状组合。</p></li><li><p>运动学 Actor 直接瞬移 → 穿透动态物体或产生巨大冲量 → 用速度驱动或开启连续碰撞检测。</p></li><li><p>触发器忘了勾选“不阻挡” → 角色被 invisible wall 挡住 → 检查碰撞预设和响应设置。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：StaticMeshActor 的 Mobility 可设为 Static / Stationary / Movable；Trigger 用 Box Trigger 并设置 Collision Preset 为 Trigger。</p></li><li><p>Unity：Rigidbody 的 Body Type 有 Dynamic / Kinematic / Static；触发器勾选 Is Trigger。</p></li></ul></div></section><section class="sec" id="s3"><h2><span class="h2-no">03</span><span>形状属性：质量、质心、摩擦与弹性</span></h2><div class="sec-body"><p>形状不只是几何，还带物理属性。课件重点讲了四个：</p>
+<ul>
+<li><strong>质量与密度（Mass and Density）</strong>：质量通常由密度乘以体积得到。密度让不同材质的物体有不同“手感”，比如木头和铁。</li>
+<li><strong>质心（Center of Mass）</strong>：质量分布的中心。质心位置决定物体如何倾倒。课件用 Gomboc 形状举例：质心低且底面稳的物体不容易翻倒。</li>
+<li><strong>摩擦（Friction）</strong>：两个表面之间的阻力，影响物体滑动和滚动。</li>
+<li><strong>弹性（Restitution）</strong>：碰撞后速度恢复的比例，0 表示完全非弹性（不弹），1 表示完全弹性。</li>
+</ul>
+<p>这些属性通常成对出现：摩擦和弹性是<strong>两个材质之间的组合属性</strong>，引擎会用查表或公式（如摩擦取几何平均、弹性取最大值）来合成。</p>
+<blockquote>
+<p>工程直觉：调物理手感时，先调质量和摩擦，再调弹性。弹性过高会让堆叠物体抖动不停。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0026.webp" alt="图注：质心与倾倒：质心投影落在支撑面内就不倒，否则翻倒。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.27</span><span>图注：质心与倾倒：质心投影落在支撑面内就不倒，否则翻倒。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0027.webp" alt="图注：不同摩擦和弹性参数的对比效果。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.28</span><span>图注：不同摩擦和弹性参数的对比效果。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>所有物体都用默认密度 → 大箱子和小球质量一样，推起来手感怪 → 按材质设置密度。</p></li><li><p>弹性设为 1 → 物体永远弹跳不停止 → 游戏里通常用 0.1~0.6，并配合休眠。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Physics Asset 里可设每根骨骼的 Physics Type、Mass、Linear/Angular Damping；物理材质（Physical Material）设 Friction 和 Restitution。</p></li><li><p>Unity：Rigidbody 的 Mass、Drag、Angular Drag；Physic Material 设 Dynamic Friction、Static Friction、Bounciness。</p></li></ul></div></section><section class="sec" id="s4"><h2><span class="h2-no">04</span><span>力、冲量与运动积分：为什么半隐式欧拉是默认</span></h2><div class="sec-body"><p>物理引擎每帧要做的事可以概括为：<strong>根据受力更新速度，再根据速度更新位置</strong>。课件先讲牛顿定律：</p>
+<ul>
+<li>第一定律：没有外力时速度不变，\( v_{t+\Delta t} = v_t \)，\( x_{t+\Delta t} = x_t + v_t \Delta t \)。</li>
+<li>第二定律：\( F = m a \)，所以 \( a = F/m \)。</li>
+</ul>
+<p><strong>力（Force）</strong>是持续作用的，产生加速度；<strong>冲量（Impulse）</strong>是瞬间改变速度的，\( \Delta v = J/m \)。爆炸、碰撞反弹通常用冲量实现。</p>
+<p>现实中的运动是连续的，但游戏里必须<strong>离散化</strong>：把时间切成固定步长 \( \Delta t \)，一步步积分。课件对比了三种欧拉方法：</p>
+<ol>
+<li><strong>显式（前向）欧拉</strong>：\( v_{t+\Delta t} = v_t + a_t \Delta t \)，\( x_{t+\Delta t} = x_t + v_t \Delta t \)。用当前速度更新位置。问题：对圆周运动，结果会<strong>发散爆炸</strong>。</li>
+<li><strong>隐式（后向）欧拉</strong>：用未来速度更新位置，\( v_{t+\Delta t} = v_t + M^{-1} F_{t+\Delta t} \Delta t \)，\( x_{t+\Delta t} = x_t + v_{t+\Delta t} \Delta t \)。稳定但会<strong>螺旋衰减</strong>，能量损失。</li>
+<li><strong>半隐式欧拉</strong>：先更新速度，再用新速度更新位置：\( v_{t+\Delta t} = v_t + a_t \Delta t \)，\( x_{t+\Delta t} = x_t + v_{t+\Delta t} \Delta t \)。步长小时能很好地近似圆周运动，<strong>稳定且简单</strong>，是游戏物理的默认选择。</li>
+</ol>
+<blockquote>
+<p>记忆口诀：显式欧拉“用旧速度走”，会越走越远；隐式欧拉“用新速度走”，会越走越缩；半隐式欧拉“先换速度再走”，刚刚好。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0046.webp" alt="图注：显式欧拉模拟圆周运动的结果会发散爆炸。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.47</span><span>图注：显式欧拉模拟圆周运动的结果会发散爆炸。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0050.webp" alt="图注：半隐式欧拉在步长较小时能很好地近似圆周运动。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.51</span><span>图注：半隐式欧拉在步长较小时能很好地近似圆周运动。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>步长太大 → 半隐式欧拉也会不稳定，物体抖动或穿透 → 减小固定步长或开启子步。</p></li><li><p>用帧时间直接当物理步长 → 帧率波动导致物理行为不一致 → 使用固定时间步（Fixed Timestep）。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Project Settings &gt; Physics &gt; Substepping 可开启子步，并设置 Max Substep Delta Time。</p></li><li><p>Unity：Fixed Timestep 默认 0.02s，可在 Time 设置中调整；Rigidbody 的 Interpolate 可平滑渲染。</p></li></ul></div><div class="code-wrap"><p class="code-cap">半隐式欧拉积分伪代码（cpp）</p><pre class="code"><code class="lang-cpp">// 每个固定步长 dt
+Vec3 acceleration = totalForce / mass;
+velocity += acceleration * dt;      // 先更新速度
+position += velocity * dt;          // 再用新速度更新位置
+</code></pre></div></section><section class="sec" id="s5"><h2><span class="h2-no">05</span><span>刚体转动：角速度、转动惯量与力矩</span></h2><div class="sec-body"><p>刚体除了平动还有转动。课件用一组对应关系把线性量和角量并列：</p>
+<table>
+<thead>
+<tr>
+<th>线性量</th>
+<th>角量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>位置 \( x \)</td>
+<td>朝向 \( R \)（矩阵或四元数）</td>
+</tr>
+<tr>
+<td>线速度 \( v = \dot{x} \)</td>
+<td>角速度 \( \omega \)</td>
+</tr>
+<tr>
+<td>线加速度 \( a \)</td>
+<td>角加速度 \( \alpha = \dot{\omega} \)</td>
+</tr>
+<tr>
+<td>质量 \( m \)</td>
+<td>转动惯量 \( I \)</td>
+</tr>
+<tr>
+<td>动量 \( p = m v \)</td>
+<td>角动量 \( L = I \omega \)</td>
+</tr>
+<tr>
+<td>力 \( F \)</td>
+<td>力矩 \( \tau = r \times F \)</td>
+</tr>
+</tbody>
+</table>
+<p>几个关键点：</p>
+<ul>
+<li><strong>角速度 \( \omega \)</strong> 的方向是旋转轴，大小是旋转快慢。物体上一点的速度 \( v = \omega \times r \)。</li>
+<li><strong>转动惯量 \( I \)</strong> 描述质量分布，质量离轴越远，转动惯量越大，越难转动。它是张量，但在主轴坐标系下可对角化。</li>
+<li><strong>角动量 \( L = I \omega \)</strong>，没有外力矩时角动量守恒。</li>
+<li><strong>力矩 \( \tau = r \times F \)</strong>，是力使物体转动的效果。</li>
+</ul>
+<p>课件用台球做例子：球杆给球一个冲量，冲量作用点偏离质心就会产生力矩，让球旋转。摩擦和压力冲量共同决定球的走位。</p>
+<blockquote>
+<p>工程直觉：调刚体手感时，转动惯量比质量更影响“转起来轻不轻”。UE 的 Physics Asset 里可以调每根骨骼的 Angular Damping 和 Inertia Tensor Scale。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0061.webp" alt="图注：线性量与角量的对应关系总结表。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.62</span><span>图注：线性量与角量的对应关系总结表。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0063.webp" alt="图注：台球动力学：压力冲量和摩擦冲量共同决定球的运动。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.64</span><span>图注：台球动力学：压力冲量和摩擦冲量共同决定球的运动。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>转动惯量设得过大 → 物体转起来像灌了铅 → 检查 Inertia Tensor Scale 或质量分布。</p></li><li><p>角速度没有阻尼 → 物体永远旋转不停 → 设置 Angular Damping。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Physics Asset 中每根 Body 可设 Angular Damping、Inertia Tensor Scale。</p></li><li><p>Unity：Rigidbody 的 Angular Drag 控制角速度衰减；AddTorque 施加力矩。</p></li></ul></div></section><section class="sec" id="s6"><h2><span class="h2-no">06</span><span>碰撞检测：Broad Phase 与 Narrow Phase</span></h2><div class="sec-body"><p>碰撞检测分两个阶段，这是所有物理引擎的标准架构：</p>
+<p><strong>Broad Phase（粗筛）</strong>：快速找出<strong>可能</strong>重叠的物体对。它用 AABB（轴对齐包围盒）做粗略判断，目标是“不漏掉，但可以多报”。常见算法：</p>
+<ul>
+<li><strong>BVH 树（Bounding Volume Hierarchy）</strong>：把场景组织成树，动态更新。课件提到动态 BVH 的三种构建方式：自顶向下、增量插入、自底向上。</li>
+<li><strong>Sort and Sweep（排序扫描）</strong>：沿每个轴排序 AABB 边界，只检查相邻交换的物体。适合物体分布较均匀的场景。</li>
+</ul>
+<p><strong>Narrow Phase（精筛）</strong>：对粗筛出的物体对做精确相交测试，并生成<strong>接触信息</strong>：接触点、接触法线、穿透深度。课件列出三类方法：</p>
+<ol>
+<li><strong>基本形状相交测试</strong>：球-球、球-胶囊、胶囊-胶囊等，有解析公式，最快。</li>
+<li><strong>Minkowski 差与 GJK 算法</strong>：把两个凸形状的碰撞转化为“原点是否在 Minkowski 差内”的问题。GJK 通过迭代找支撑点，判断是否分离。</li>
+<li><strong>分离轴定理（SAT）</strong>：对凸多面体，检查所有面法线和边叉乘方向，只要存在一个轴能分开两个形状，就不碰撞。</li>
+</ol>
+<blockquote>
+<p>关键结论：Narrow Phase 不仅回答“碰没碰”，还要给出<strong>接触法线和穿透深度</strong>，求解器才能计算冲量。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0067.webp" alt="图注：Broad Phase 与 Narrow Phase 的分工示意。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.68</span><span>图注：Broad Phase 与 Narrow Phase 的分工示意。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0084.webp" alt="图注：Minkowski 差与原点：原点在差集内表示两个形状重叠。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.85</span><span>图注：Minkowski 差与原点：原点在差集内表示两个形状重叠。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>Broad Phase 漏报 → 物体穿透但没检测到 → 检查 AABB 是否随物体正确更新。</p></li><li><p>Narrow Phase 法线方向反了 → 求解时把物体推得更深 → 检查法线是否从 A 指向 B。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Chaos 物理的碰撞检测对用户透明，但可通过 Show Collision 查看简单碰撞形状。</p></li><li><p>Unity：Physics Debugger 可可视化 Broad Phase 和接触点。</p></li></ul></div></section><section class="sec" id="s7"><h2><span class="h2-no">07</span><span>碰撞求解与场景查询：让物体分开并回答“打中了没”</span></h2><div class="sec-body"><p>检测到碰撞后，要<strong>求解</strong>，让物体不再穿透。课件列出三种思路：</p>
+<ol>
+<li><strong>罚力（Penalty Force）</strong>：按穿透深度施加一个弹簧力把物体推开。简单但需要很大的力和很小的步长，游戏里很少用。</li>
+<li><strong>速度约束（Velocity Constraints）</strong>：在速度层面施加冲量，消除沿法线方向的相对速度。主流方法是<strong>顺序冲量法（Sequential Impulses）</strong>，迭代多次施加冲量，逐步逼近无穿透。</li>
+<li><strong>位置约束（Position Constraints）</strong>：直接修正位置，消除穿透。常与速度约束配合使用。</li>
+</ol>
+<p>课件重点讲了速度约束：把碰撞建模为约束，用拉格朗日力学推导，最终得到冲量公式。顺序冲量法每次处理一个接触点，迭代若干次，适合实时。</p>
+<p><strong>场景查询（Scene Query）</strong> 是物理系统对外提供的“问答”接口：</p>
+<ul>
+<li><strong>Raycast（射线检测）</strong>：从一点沿方向发射射线，返回最近命中。用于射击、拾取、视线检测。</li>
+<li><strong>Sweep（扫掠）</strong>：用一个形状沿方向扫过，检测碰撞。用于角色移动、子弹。</li>
+<li><strong>Overlap（重叠检测）</strong>：查询一个区域内所有重叠物体。用于爆炸范围、触发器。</li>
+</ul>
+<p><strong>碰撞分组（Collision Group）</strong> 决定谁和谁碰撞。课件举例：Player 属于 Pawn，障碍物属于 Static，可移动箱子属于 Movable，通过矩阵配置碰撞关系。</p>
+<blockquote>
+<p>工程直觉：Raycast 要设置合理的距离和碰撞通道，否则会打到不该打的东西（比如自己的胶囊体）。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0105.webp" alt="图注：速度约束的冲量施加过程：旧速度经过冲量变为新速度。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.106</span><span>图注：速度约束的冲量施加过程：旧速度经过冲量变为新速度。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0115.webp" alt="图注：碰撞分组矩阵：不同类别之间的碰撞开关。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.116</span><span>图注：碰撞分组矩阵：不同类别之间的碰撞开关。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>Raycast 起点在角色胶囊体内 → 打中自己 → 使用忽略自身或调整起点。</p></li><li><p>顺序冲量迭代次数太少 → 堆叠物体下陷 → 增加迭代次数或子步。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Line Trace By Channel / Sweep By Channel / Overlap 节点；碰撞预设（Collision Preset）配置通道和响应。</p></li><li><p>Unity：Physics.Raycast、Physics.SphereCast、Physics.OverlapSphere；Layer Collision Matrix 配置层碰撞。</p></li></ul></div></section><section class="sec" id="s8"><h2><span class="h2-no">08</span><span>工程优化：休眠、岛、连续碰撞与确定性</span></h2><div class="sec-body"><p>物理系统很贵，工程上必须优化。课件讲了几个关键手段：</p>
+<ul>
+<li><strong>岛（Island）</strong>：把相互接触的物体分成一组，组与组之间独立求解，便于并行。</li>
+<li><strong>休眠（Sleeping）</strong>：长时间不动的物体停止模拟，节省 CPU。被其他物体撞到或受力时唤醒。</li>
+<li><strong>连续碰撞检测（CCD）</strong>：快速物体可能在一帧内穿过薄墙，这叫<strong>隧穿（Tunneling）</strong>。解决方案是 <strong>Time-of-Impact（TOI）</strong>，通过保守推进估算碰撞时间，在碰撞前停下来。</li>
+<li><strong>确定性模拟（Deterministic Simulation）</strong>：同样的初始状态和输入，必须得到同样的结果。这对多人游戏、回放、帧同步至关重要。要求固定步长、固定迭代顺序、避免浮点不确定性。</li>
+</ul>
+<blockquote>
+<p>注意：确定性在跨平台时很难保证，因为不同 CPU 的浮点运算可能有差异。很多游戏用定点数或锁步帧同步来规避。</p>
+</blockquote></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0120.webp" alt="图注：隧穿现象：快速物体在一帧内穿过薄障碍。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.121</span><span>图注：隧穿现象：快速物体在一帧内穿过薄障碍。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L10/p0125.webp" alt="图注：确定性模拟的要求：相同旧状态加相同输入得到相同新状态。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.126</span><span>图注：确定性模拟的要求：相同旧状态加相同输入得到相同新状态。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>快速子弹穿透薄墙 → 未开启 CCD → 开启 Continuous Collision Detection 或使用射线检测。</p></li><li><p>多人游戏物理不同步 → 浮点不确定性或步长不一致 → 使用固定步长和确定性物理库。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE：Project Settings &gt; Physics &gt; Enable Continuous Collision Detection；Chaos 支持子步和休眠。</p></li><li><p>Unity：Rigidbody 的 Collision Detection 设为 Continuous 或 Continuous Dynamic；Physics Manager 可调 Sleep Threshold。</p></li></ul></div></section><h2><span>引擎对照表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>概念 / 效果</th><th>Unreal Engine</th><th>Unity</th></tr></thead><tbody><tr><td><p>物理 Actor 类型</p></td><td><p>Mobility: Static / Stationary / Movable；Trigger 用 Collision Preset</p></td><td><p>Rigidbody Body Type: Dynamic / Kinematic / Static；Is Trigger</p></td></tr><tr><td><p>碰撞形状</p></td><td><p>Simple Collision（Box/Sphere/Capsule/Convex）与 Complex Collision（Triangle Mesh）</p></td><td><p>BoxCollider、SphereCollider、CapsuleCollider、MeshCollider（Convex 勾选）</p></td></tr><tr><td><p>物理材质</p></td><td><p>Physical Material 设 Friction、Restitution</p></td><td><p>Physic Material 设 Dynamic Friction、Bounciness</p></td></tr><tr><td><p>场景查询</p></td><td><p>Line Trace、Sweep、Overlap 节点</p></td><td><p>Physics.Raycast、Physics.SphereCast、Physics.OverlapSphere</p></td></tr><tr><td><p>连续碰撞检测</p></td><td><p>Project Settings &gt; Physics &gt; Enable CCD</p></td><td><p>Rigidbody Collision Detection = Continuous</p></td></tr><tr><td><p>固定步长</p></td><td><p>Substepping 与 Max Substep Delta Time</p></td><td><p>Fixed Timestep（Time 设置）</p></td></tr></tbody></table></div><h2><span>术语双语表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>English</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>Actor</td><td>物理 actor</td><td><p>物理世界中的基本对象，包含形状、质量和运动状态。</p></td></tr><tr><td>Kinematic</td><td>运动学</td><td><p>不受物理规律驱动、由脚本或动画设置位置的 actor。</p></td></tr><tr><td>Trigger</td><td>触发器</td><td><p>不阻挡但能检测进入/离开的碰撞体。</p></td></tr><tr><td>Semi-implicit Euler</td><td>半隐式欧拉</td><td><p>先更新速度再更新位置的积分方法，游戏物理常用。</p></td></tr><tr><td>Moment of Inertia</td><td>转动惯量</td><td><p>描述质量分布对旋转难易程度的量。</p></td></tr><tr><td>Broad Phase</td><td>粗筛阶段</td><td><p>用 AABB 快速找出可能碰撞的物体对。</p></td></tr><tr><td>Narrow Phase</td><td>精筛阶段</td><td><p>精确计算接触点、法线和穿透深度。</p></td></tr><tr><td>GJK</td><td>GJK 算法</td><td><p>基于 Minkowski 差判断凸形状是否相交的迭代算法。</p></td></tr><tr><td>SAT</td><td>分离轴定理</td><td><p>若存在一个轴能分开两个凸形状，则它们不相交。</p></td></tr><tr><td>CCD</td><td>连续碰撞检测</td><td><p>防止快速物体隧穿的检测方式。</p></td></tr></tbody></table></div><h2><span>课后练习</span></h2><div class="quiz"><p class="quiz-q"><span class="q-no">01</span><span><p>显式欧拉、隐式欧拉、半隐式欧拉在模拟圆周运动时分别有什么表现？为什么游戏物理默认用半隐式欧拉？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从能量角度想：显式欧拉能量增加，隐式欧拉能量减少。</p></p><p class="quiz-a"><p>显式欧拉用旧速度更新位置，结果会发散爆炸；隐式欧拉用新速度更新位置，结果会螺旋衰减；半隐式欧拉先更新速度再用新速度更新位置，步长较小时能很好地近似圆周运动，稳定且计算简单，因此是游戏物理的默认选择。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">02</span><span><p>一个质量为 2kg 的球以 3m/s 撞墙，弹性系数为 0.5，求碰撞后法线方向速度大小。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>弹性系数 e 满足 v_out = -e * v_in。</p></p><p class="quiz-a"><p>碰撞后法线方向速度大小为 0.5 × 3 = 1.5 m/s，方向与入射方向相反。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">03</span><span><p>为什么动态 Actor 不能使用三角网格作为碰撞形状？应该用什么替代？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>考虑体积和惯性。</p></p><p class="quiz-a"><p>三角网格没有明确的内部体积，无法计算质量和转动惯量，且碰撞检测复杂。动态物体应使用凸包（Convex Mesh）或基本形状（球、胶囊、盒）的组合。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">04</span><span><p>简述 Broad Phase 和 Narrow Phase 的分工，并各举一个算法。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>粗筛求快，精筛求准。</p></p><p class="quiz-a"><p>Broad Phase 用 AABB 快速找出可能重叠的物体对，算法有 BVH、Sort and Sweep；Narrow Phase 对候选对做精确相交测试并生成接触信息，算法有基本形状解析测试、GJK、SAT。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">05</span><span><p>在 UE 中如何防止快速子弹穿透薄墙？请说出至少两种方法。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>考虑连续碰撞检测和射线检测。</p></p><p class="quiz-a"><p>方法一：开启子弹的 Continuous Collision Detection（CCD）；方法二：用射线检测（Line Trace）代替物理模拟；方法三：增加物理子步或减小固定步长。</p></p></details></div><nav class="pager"><a class="cta prev" href="../GAMES104/104_L09.html"><span class="dir"><small>← 上一讲</small><b>L09 动画系统进阶</b></span></a><a class="cta next" href="../GAMES104/104_L11.html"><span class="dir"><small>下一讲 →</small><b>L11 物理系统应用</b></span></a></nav><footer class="page-foot"><span>本手册基于 GAMES104 课件整理，仅供个人学习使用。</span><span>课件版权归原作者与课程组所有。</span><span><a href="../index.html">手册首页</a> · <a href="../GAMES104/index.html">GAMES104 课程总览</a></span></footer></article></main></div><div class="reading-bar" id="reading-bar" aria-hidden="true"></div><div class="search-overlay" id="search-overlay"><div class="search-panel" role="dialog" aria-modal="true" aria-label="搜索手册"><div class="search-input-row"><span class="ico" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索知识点、术语、常见坑、讲次…" autocomplete="off" aria-label="搜索关键词"><kbd>Esc</kbd></div><div class="search-list" id="search-list"></div><div class="search-hint"><span>↑↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div></div></div><div class="lightbox" id="lightbox" aria-hidden="true"></div><script src="../assets/katex/katex.min.js"></script><script src="../assets/katex/contrib/auto-render.min.js"></script><script src="../assets/search-index.js"></script><script src="../assets/app.js"></script><script>document.addEventListener("DOMContentLoaded",function(){if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:false});});</script></body></html>

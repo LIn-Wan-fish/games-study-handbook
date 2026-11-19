@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-tone="4" data-root="../">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 2 讲：线性代数复习——从向量、矩阵到四元数旋转 · GAMES 学习手册</title>
+<meta name="description" content="把角色动画里天天要用的向量、矩阵、旋转表示与插值一次性讲透">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230066cc'/%3E%3Ctext x='16' y='22' font-family='-apple-system,Segoe UI,sans-serif' font-size='17' font-weight='800' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var t = q === 'light' || q === 'dark' ? q : localStorage.getItem('theme');
+    var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+</script>
+</head><div class="bg-aura" aria-hidden="true"></div><header class="topbar"><div class="topbar-left"><a class="nav-pill brand-pill" href="../index.html" aria-label="GAMES 学习手册首页"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-text"><b>GAMES 学习手册</b><small>计算机图形学 · 3A 游戏开发</small></span></a><span class="nav-pill crumb-pill"><a href="../index.html">首页</a> / <a href="../GAMES105/index.html">GAMES105</a> / <b>线性代数复习</b></span></div><nav class="topbar-center seg-tabs" aria-label="课程切换"><a class="seg-tab" href="../GAMES101/index.html" data-tone="1"><span class="seg-code">GAMES101</span></a><a class="seg-tab" href="../GAMES104/index.html" data-tone="2"><span class="seg-code">GAMES104</span></a><a class="seg-tab" href="../GAMES202/index.html" data-tone="3"><span class="seg-code">GAMES202</span></a><a class="seg-tab active" href="../GAMES105/index.html" data-tone="4"><span class="seg-code">GAMES105</span></a></nav><div class="topbar-right"><button class="topbar-ctl search-btn" type="button" data-search-open aria-label="搜索知识点"><span class="s-ico" aria-hidden="true">⌕</span><span class="s-label">搜索</span><kbd>/</kbd></button><button class="topbar-ctl theme-btn" type="button" data-theme-toggle aria-label="切换主题"><span aria-hidden="true">◐</span><span class="t-label" data-theme-label>浅色</span></button><button class="topbar-ctl print-btn" type="button" data-print aria-label="打印本页"><span class="p-ico" aria-hidden="true">⎙</span><span class="p-label">打印</span></button><button class="topbar-ctl menu-btn" type="button" data-side-toggle aria-label="打开目录" aria-expanded="false">☰</button></div></header><div class="shell-body"><aside class="sidebar material" aria-label="目录"><div class="side-block"><p class="sidebar-h">本讲目录</p><ul class="toc page-toc"><li><a href="#s1">1. 向量：既有大小又有方向</a></li><li><a href="#s2">2. 矩阵：旋转与变换的载体</a></li><li><a href="#s3">3. 旋转的轴角表示与 Rodrigues 公式</a></li><li><a href="#s4">4. 正交基与坐标变换</a></li><li><a href="#s5">5. 旋转的四种表示：矩阵、欧拉角、轴角、四元数</a></li><li><a href="#s6">6. 四元数：定义、运算与旋转</a></li><li><a href="#s7">7. 旋转插值：为什么不能直接线性插值，SLERP 怎么做</a></li></ul></div><div class="side-block"><p class="sidebar-h">全部讲次<span class="count">13 讲</span></p><ul class="toc lecture-toc"><li><a href="../GAMES105/index.html"><span class="lec-no">◎</span><span>课程总览</span></a></li><li><a class="" href="../GAMES105/105_L01.html"><span class="lec-no">L01</span><span>角色动画导论</span></a></li><li><a class="active" href="../GAMES105/105_L02.html"><span class="lec-no">L02</span><span>线性代数复习</span></a></li><li><a class="" href="../GAMES105/105_L03.html"><span class="lec-no">L03</span><span>正向与逆向运动学</span></a></li><li><a class="" href="../GAMES105/105_L04.html"><span class="lec-no">L04</span><span>运动重定向与关键帧插值</span></a></li><li><a class="" href="../GAMES105/105_L05.html"><span class="lec-no">L05</span><span>数据驱动角色动画</span></a></li><li><a class="" href="../GAMES105/105_L06.html"><span class="lec-no">L06</span><span>基于学习的角色动画</span></a></li><li><a class="" href="../GAMES105/105_L06a.html"><span class="lec-no">L06a</span><span>学习型角色动画（续）</span></a></li><li><a class="" href="../GAMES105/105_L07.html"><span class="lec-no">L07</span><span>蒙皮 Skinning</span></a></li><li><a class="" href="../GAMES105/105_L08.html"><span class="lec-no">L08</span><span>物理模拟与关节刚体</span></a></li><li><a class="" href="../GAMES105/105_L09.html"><span class="lec-no">L09</span><span>驱动仿真角色</span></a></li><li><a class="" href="../GAMES105/105_L10.html"><span class="lec-no">L10</span><span>角色控制</span></a></li><li><a class="" href="../GAMES105/105_L11.html"><span class="lec-no">L11</span><span>学习行走</span></a></li><li><a class="" href="../GAMES105/105_L12.html"><span class="lec-no">L12</span><span>最优控制与强化学习</span></a></li></ul></div><div class="side-foot">基于 GAMES105 课件整理 · 仅供个人学习<br><a href="../index.html">← 返回手册首页</a></div></aside><div class="side-scrim"></div><main class="page"><article class="article"><header class="ch-head"><span class="ch-course">GAMES105 · 计算机角色动画基础</span><h1 class="ch-title">第 2 讲：线性代数复习——从向量、矩阵到四元数旋转</h1><p class="ch-sub">把角色动画里天天要用的向量、矩阵、旋转表示与插值一次性讲透</p><div class="ch-meta"><span class="chip">课件 <b>141</b> 页</span><span class="chip">精讲 <b>7</b> 节</span><span class="chip">术语 <b>9</b> 条</span><span class="chip">练习 <b>4</b> 道</span></div></header><div class="objectives"><div class="callout key"><p class="callout-h">◆ 学完这一讲，你应该能</p><ul><li><p>能说明向量点积、叉积的几何意义，并用它们求夹角、投影、旋转轴</p></li><li><p>能写出 Rodrigues 旋转公式，并解释它如何把轴角变成旋转矩阵</p></li><li><p>能区分旋转矩阵、欧拉角、轴角、四元数四种旋转表示的优缺点</p></li><li><p>能解释为什么旋转矩阵不能直接线性插值，以及 SLERP 如何解决</p></li><li><p>能在 UE/Unity 中找到与这些数学概念对应的类型和函数</p></li></ul></div></div><div class="keybox"><p class="keybox-h">核心结论速记</p><ol class="keybox-list"><li><p>向量点积给出夹角余弦与投影长度，叉积给出垂直于两向量的轴，两者是旋转计算的基础。</p></li><li><p>绕单位轴 u 旋转 θ 的矩阵可用 Rodrigues 公式 R = I + sinθ [u]× + (1-cosθ)[u]×² 构造。</p></li><li><p>旋转矩阵是正交矩阵且行列式为 1，逆等于转置，组合旋转就是矩阵相乘。</p></li><li><p>欧拉角直观但有万向锁和约定依赖问题；轴角紧凑但表示不唯一；四元数无万向锁且适合插值。</p></li><li><p>单位四元数 q = (cos(θ/2), u sin(θ/2)) 与轴角一一对应，旋转向量用 p' = q p q*。</p></li><li><p>旋转不能直接线性插值，SLERP 在单位四元数球面上沿大圆插值，保证角速度恒定。</p></li></ol></div><section class="sec" id="s1"><h2><span class="h2-no">01</span><span>1. 向量：既有大小又有方向</span></h2><div class="sec-body"><p>向量（vector）是既有大小（magnitude）又有方向（direction）的量。在角色动画里，它既可以表示位置、速度，也可以表示抽象的方向，比如骨骼的朝向、关节的旋转轴。</p>
+<p><strong>表示</strong>：在笛卡尔坐标系中，三维向量写成三个分量的列向量：
+\[ \mathbf{a} = \begin{bmatrix} a_x \\ a_y \\ a_z \end{bmatrix} \]
+它的长度（模）为 \( \|\mathbf{a}\| = \sqrt{a_x^2 + a_y^2 + a_z^2} \)。</p>
+<p><strong>运算</strong>：向量加法逐分量相加，数乘逐分量缩放。这些运算满足交换律、结合律，几何上就是平行四边形法则。</p>
+<p><strong>点积（dot product）</strong>：\( \mathbf{a}\cdot\mathbf{b} = a_x b_x + a_y b_y + a_z b_z \)。几何意义是 \( \mathbf{a}\cdot\mathbf{b} = \|\mathbf{a}\|\|\mathbf{b}\|\cos\theta \)，其中 θ 是两向量夹角。由此可得：</p>
+<ul>
+<li>求夹角：\( \theta = \arccos\left(\frac{\mathbf{a}\cdot\mathbf{b}}{\|\mathbf{a}\|\|\mathbf{b}\|}\right) \)</li>
+<li>求投影长度：\( \|\mathbf{b}\|\cos\theta = \frac{\mathbf{a}\cdot\mathbf{b}}{\|\mathbf{a}\|} \)</li>
+</ul>
+<p><strong>叉积（cross product）</strong>：仅三维向量有叉积，结果是一个新向量：
+\[ \mathbf{c} = \mathbf{a}\times\mathbf{b} = \begin{bmatrix} a_y b_z - a_z b_y \\ a_z b_x - a_x b_z \\ a_x b_y - a_y b_x \end{bmatrix} \]
+它垂直于 a 和 b，方向由右手定则决定，长度为 \( \|\mathbf{a}\|\|\mathbf{b}\|\sin\theta \)。叉积不满足交换律：\( \mathbf{a}\times\mathbf{b} = -\mathbf{b}\times\mathbf{a} \)。</p>
+<p>这两个运算在动画里无处不在：点积用来判断朝向、计算光照；叉积用来求旋转轴、构建局部坐标系。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0014.webp" alt="图注：点积的几何意义——a·b 等于 a 的模乘以 b 在 a 上的投影长度，也等于两向量模长乘积乘夹角余弦。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.15</span><span>图注：点积的几何意义——a·b 等于 a 的模乘以 b 在 a 上的投影长度，也等于两向量模长乘积乘夹角余弦。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0017.webp" alt="图注：三维叉积的分量公式，结果向量垂直于原两向量，方向由右手定则确定。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.18</span><span>图注：三维叉积的分量公式，结果向量垂直于原两向量，方向由右手定则确定。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>法线未归一化 → 点积结果不是余弦值，光照/夹角计算全错 → 参与点积前先 normalize。</p></li><li><p>叉积顺序写反 → 旋转轴方向反了，旋转方向相反 → 记住 a×b = -b×a，按右手定则检查。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FVector 提供 DotProduct、CrossProduct 静态函数，蓝图节点也有对应。</p></li><li><p>Unity 中 Vector3.Dot、Vector3.Cross 直接对应，注意 Unity 是左手坐标系，叉积方向与右手系相反。</p></li></ul></div><div class="code-wrap"><p class="code-cap">点积与叉积的 C++ 实现（cpp）</p><pre class="code"><code class="lang-cpp">struct Vec3 { float x, y, z; };
+float dot(Vec3 a, Vec3 b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+Vec3 cross(Vec3 a, Vec3 b) {
+    return { a.y*b.z - a.z*b.y,
+             a.z*b.x - a.x*b.z,
+             a.x*b.y - a.y*b.x };
+}
+float length(Vec3 v) { return sqrtf(dot(v, v)); }
+Vec3 normalize(Vec3 v) { float l = length(v); return {v.x/l, v.y/l, v.z/l}; }</code></pre></div></section><section class="sec" id="s2"><h2><span class="h2-no">02</span><span>2. 矩阵：旋转与变换的载体</span></h2><div class="sec-body"><p>矩阵（matrix）是二维数组。在图形学里，我们主要用 3×3 矩阵表示旋转/缩放，用 4×4 矩阵表示包含平移的仿射变换。</p>
+<p><strong>基本运算</strong>：</p>
+<ul>
+<li>转置（transpose）：\( (A^T)_{ij} = A_{ji} \)，行列互换。</li>
+<li>数乘与加法：逐元素进行。</li>
+<li>矩阵乘法：\( (AB)_{ij} = \sum_k A_{ik} B_{kj} \)，要求左矩阵列数等于右矩阵行数。</li>
+</ul>
+<p>矩阵乘法不满足交换律：\( AB \neq BA \)。这直接对应“先旋转再平移”和“先平移再旋转”结果不同。但它满足结合律：\( (AB)C = A(BC) \)，所以组合变换可以预先乘成一个矩阵。</p>
+<p><strong>特殊矩阵</strong>：</p>
+<ul>
+<li>单位矩阵 I：对角为 1，其余为 0，\( IA = AI = A \)。</li>
+<li>正交矩阵：\( A^T A = A A^T = I \)，即 \( A^{-1} = A^T \)。旋转矩阵就是正交矩阵。</li>
+<li>行列式（determinant）：记为 det(A)。性质：\( \det(AB) = \det(A)\det(B) \)，\( \det(A^T) = \det(A) \)。旋转矩阵行列式为 1。</li>
+</ul>
+<p><strong>用矩阵表示点积与叉积</strong>：</p>
+<ul>
+<li>点积可写成 \( \mathbf{a}\cdot\mathbf{b} = \mathbf{a}^T \mathbf{b} \)。</li>
+<li>叉积可写成矩阵乘向量：\( \mathbf{a}\times\mathbf{b} = [\mathbf{a}]_\times \mathbf{b} \)，其中 \( [\mathbf{a}]_\times \) 是反对称矩阵（skew-symmetric）：
+\[ [\mathbf{a}]_\times = \begin{bmatrix} 0 & -a_z & a_y \\ a_z & 0 & -a_x \\ -a_y & a_x & 0 \end{bmatrix} \]
+这个写法在推导旋转公式时非常方便。</li>
+</ul></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0052.webp" alt="图注：叉积的矩阵形式——把 a 写成反对称矩阵 [a]×，则 a×b = [a]× b，这是 Rodrigues 公式的推导基础。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.53</span><span>图注：叉积的矩阵形式——把 a 写成反对称矩阵 [a]×，则 a×b = [a]× b，这是 Rodrigues 公式的推导基础。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>矩阵乘法顺序搞反 → 变换结果与预期不符 → 记住列向量右乘：先应用的变换在右边。</p></li><li><p>把正交矩阵的转置当成普通转置 → 忘记它同时是逆矩阵 → 旋转矩阵求逆直接转置即可。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FMatrix 是 4×4 矩阵，FMatrix::GetTransposed 求转置，FMatrix::Inverse 求逆。</p></li><li><p>Unity 中 Matrix4x4 提供 transpose、inverse 属性，注意 Unity 用列向量右乘。</p></li></ul></div></section><section class="sec" id="s3"><h2><span class="h2-no">03</span><span>3. 旋转的轴角表示与 Rodrigues 公式</span></h2><div class="sec-body"><p>给定两个向量 a 和 b，如何求把 a 转到 b 的旋转？</p>
+<p><strong>旋转轴</strong>：取叉积方向 \( \mathbf{u} = \frac{\mathbf{a}\times\mathbf{b}}{\|\mathbf{a}\times\mathbf{b}\|} \)。注意，任何在 a、b 角平分面内的向量都可以作为轴，但最小旋转对应的轴就是叉积方向。</p>
+<p><strong>旋转角</strong>：\( \theta = \arccos\left(\frac{\mathbf{a}\cdot\mathbf{b}}{\|\mathbf{a}\|\|\mathbf{b}\|}\right) \)。</p>
+<p><strong>如何旋转一个向量</strong>：把向量 a 绕单位轴 u 旋转 θ 得到 b。推导思路是把 a 分解为沿 u 的分量和垂直于 u 的分量，垂直分量在垂直于 u 的平面内旋转。最终得到 Rodrigues 旋转公式（Rodrigues' rotation formula）：
+\[ \mathbf{b} = \mathbf{a} + \sin\theta\,(\mathbf{u}\times\mathbf{a}) + (1-\cos\theta)\,\mathbf{u}\times(\mathbf{u}\times\mathbf{a}) \]
+写成矩阵形式：
+\[ R = I + \sin\theta\,[\mathbf{u}]_\times + (1-\cos\theta)\,[\mathbf{u}]_\times^2 \]
+其中 \( [\mathbf{u}]_\times \) 是 u 的反对称矩阵。这个公式把轴角 \( (\mathbf{u}, \theta) \) 直接变成旋转矩阵 R，是后面所有旋转表示互转的核心。</p>
+<p><strong>几何直觉</strong>：第一项是原向量；第二项沿切向“推”一把，大小 sinθ；第三项沿径向“拉”回来，大小 (1-cosθ)，保证结果落在圆上。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0034.webp" alt="图注：Rodrigues 旋转公式的几何分解——a 加上切向分量 v 和径向修正 t，得到旋转后的 b。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.35</span><span>图注：Rodrigues 旋转公式的几何分解——a 加上切向分量 v 和径向修正 t，得到旋转后的 b。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>轴 u 没有归一化 → 公式里 sinθ、cosθ 的尺度不对，旋转结果错误 → 使用前必须 normalize。</p></li><li><p>a 与 b 平行时叉积为零 → 轴无法确定 → 需要特判：同向不旋转，反向任选垂直轴旋转 180°。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FRotator 转 FQuat 再转 FMatrix 内部就是走轴角/四元数路线，一般不直接手写 Rodrigues。</p></li><li><p>Unity 中 Quaternion.AngleAxis(angle, axis) 等价于轴角构造，内部用四元数实现。</p></li></ul></div><div class="code-wrap"><p class="code-cap">Rodrigues 公式：轴角转旋转矩阵（3×3）（cpp）</p><pre class="code"><code class="lang-cpp">Mat3 rodrigues(Vec3 u, float theta) {
+    u = normalize(u);
+    float c = cosf(theta), s = sinf(theta);
+    Mat3 K = { {0, -u.z, u.y}, {u.z, 0, -u.x}, {-u.y, u.x, 0} };
+    Mat3 K2 = K * K;
+    Mat3 R;
+    for (int i = 0; i &lt; 3; ++i)
+        for (int j = 0; j &lt; 3; ++j)
+            R[i][j] = (i==j?1:0) + s*K[i][j] + (1-c)*K2[i][j];
+    return R;
+}</code></pre></div></section><section class="sec" id="s4"><h2><span class="h2-no">04</span><span>4. 正交基与坐标变换</span></h2><div class="sec-body"><p>正交基（orthogonal basis）是一组两两垂直、长度为 1 的基向量 \( \mathbf{e}_x, \mathbf{e}_y, \mathbf{e}_z \)。任何向量都可以写成它们的线性组合：
+\[ \mathbf{a} = a_x \mathbf{e}_x + a_y \mathbf{e}_y + a_z \mathbf{e}_z \]
+系数 \( (a_x, a_y, a_z) \) 就是 a 在该基下的坐标。因为基是正交归一的，坐标可以通过点积直接求出：\( a_x = \mathbf{a}\cdot\mathbf{e}_x \)，等等。</p>
+<p><strong>坐标变换</strong>：同一个向量在不同坐标系下坐标不同。如果物体坐标系到全局坐标系的旋转矩阵为 R（其列向量是物体轴在全局系下的方向），那么：</p>
+<ul>
+<li>物体坐标转全局坐标：\( \mathbf{a}_{global} = R\,\mathbf{a}_{local} \)</li>
+<li>全局坐标转物体坐标：\( \mathbf{a}_{local} = R^T\,\mathbf{a}_{global} \)（因为 R 正交）</li>
+</ul>
+<p>这就是为什么旋转矩阵的列可以理解为“局部坐标轴在父空间中的方向”。在角色动画里，骨骼的局部变换、父子空间转换都依赖这个性质。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0037.webp" alt="图注：正交基下向量的坐标表示——a 在 e_x、e_y、e_z 上的投影系数就是它的坐标。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.38</span><span>图注：正交基下向量的坐标表示——a 在 e_x、e_y、e_z 上的投影系数就是它的坐标。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>基向量不正交 → 不能简单用点积求坐标 → 需要求逆矩阵或解线性方程组。</p></li><li><p>混淆行向量与列向量约定 → 坐标变换方向搞反 → 统一约定：列向量右乘，R 的列是局部轴在全局的方向。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FMatrix 的列向量就是局部轴方向，TransformVector 做局部到全局，InverseTransformVector 做反向。</p></li><li><p>Unity 中 transform.TransformPoint / InverseTransformPoint 完成局部与全局坐标转换。</p></li></ul></div></section><section class="sec" id="s5"><h2><span class="h2-no">05</span><span>5. 旋转的四种表示：矩阵、欧拉角、轴角、四元数</span></h2><div class="sec-body"><p>同一个三维旋转有很多种表示方式，课件对比了四种，每种都有取舍。</p>
+<p><strong>旋转矩阵（rotation matrix）</strong>：3×3 正交矩阵，行列式为 1。优点是组合旋转就是矩阵乘法，应用旋转就是矩阵乘向量，非常方便；缺点是 9 个参数只有 3 个自由度，冗余大，且不能直接线性插值。</p>
+<p><strong>欧拉角（Euler angles）</strong>：用绕三个坐标轴的转角 \( (\alpha, \beta, \gamma) \) 表示，如 \( R = R_z(\gamma) R_y(\beta) R_x(\alpha) \)。优点是直观、参数少；缺点是有约定依赖（XYZ、ZYX 等 12 种顺序）、万向锁（gimbal lock）——当两个旋转轴平行时丢失一个自由度。</p>
+<p><strong>轴角（axis-angle）</strong>：用单位轴 u 和角 θ 表示。优点是几何意义明确；缺点是表示不唯一（\( (\mathbf{u}, \theta) \) 与 \( (-\mathbf{u}, -\theta) \) 等价，且 θ 可加 2π 的整数倍），插值也麻烦。</p>
+<p><strong>四元数（quaternion）</strong>：用 4 个数 \( q = (w, \mathbf{v}) \) 表示，单位四元数对应旋转。优点是无万向锁、插值平滑（SLERP）、组合方便；缺点是不够直观，需要理解其代数规则。</p>
+<p>在角色动画里，四元数几乎是旋转插值的标准表示，而矩阵用于最终变换计算，欧拉角只在 UI 和动画曲线里出现。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0100.webp" alt="图注：欧拉角用三次基本旋转组合表示任意旋转，但不同旋转顺序结果不同，且存在万向锁。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.101</span><span>图注：欧拉角用三次基本旋转组合表示任意旋转，但不同旋转顺序结果不同，且存在万向锁。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0125.webp" alt="图注：单位四元数与轴角的对应关系 q = (cos(θ/2), u sin(θ/2))，四元数在 4D 单位球面上。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.126</span><span>图注：单位四元数与轴角的对应关系 q = (cos(θ/2), u sin(θ/2))，四元数在 4D 单位球面上。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>欧拉角顺序不统一 → 同一个角度值得到不同姿态 → 明确约定旋转顺序（如 UE 的 FRotator 是 ZYX）。</p></li><li><p>轴角插值直接线性插值角度 → 旋转轴可能突变 → 改用四元数 SLERP。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FRotator 是欧拉角（Pitch/Yaw/Roll），FQuat 是四元数，FTransform 内部用四元数。</p></li><li><p>Unity 中 Transform.eulerAngles 是欧拉角，Transform.rotation 是四元数，Quaternion.Euler 做转换。</p></li></ul></div></section><section class="sec" id="s6"><h2><span class="h2-no">06</span><span>6. 四元数：定义、运算与旋转</span></h2><div class="sec-body"><p>四元数（quaternion）是复数的推广：
+\[ q = w + x\mathbf{i} + y\mathbf{j} + z\mathbf{k} \]
+其中 \( \mathbf{i}^2 = \mathbf{j}^2 = \mathbf{k}^2 = \mathbf{ijk} = -1 \)，且乘法不满足交换律。常写成标量-向量形式 \( q = (w, \mathbf{v}) \)。</p>
+<p><strong>基本运算</strong>：</p>
+<ul>
+<li>共轭：\( q^* = (w, -\mathbf{v}) \)</li>
+<li>模长：\( \|q\| = \sqrt{w^2 + \|\mathbf{v}\|^2} \)</li>
+<li>逆：\( q^{-1} = q^* / \|q\|^2 \)，单位四元数 \( q^{-1} = q^* \)</li>
+<li>乘法：\( q_1 q_2 = (w_1 w_2 - \mathbf{v}_1\cdot\mathbf{v}_2,\; w_1\mathbf{v}_2 + w_2\mathbf{v}_1 + \mathbf{v}_1\times\mathbf{v}_2) \)</li>
+</ul>
+<p><strong>单位四元数表示旋转</strong>：绕单位轴 u 旋转 θ 对应
+\[ q = \left(\cos\frac{\theta}{2},\; \mathbf{u}\sin\frac{\theta}{2}\right) \]
+注意角度是半角。旋转一个三维向量 p（写成纯四元数 \( (0, \mathbf{p}) \)）：
+\[ p' = q\, p\, q^* \]
+组合旋转：先 q1 再 q2 对应 \( q = q_2 q_1 \)（注意顺序）。</p>
+<p><strong>为什么用四元数</strong>：没有万向锁；单位四元数只有 4 个参数、3 个自由度，冗余比矩阵小；插值可以在 4D 单位球面上做 SLERP，得到恒定角速度的平滑旋转。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0120.webp" alt="图注：四元数乘法的标量-向量形式，注意叉积项导致不满足交换律。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.121</span><span>图注：四元数乘法的标量-向量形式，注意叉积项导致不满足交换律。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0127.webp" alt="图注：用单位四元数旋转向量 p' = q p q*，其中 p 视为纯四元数 (0, p)。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.128</span><span>图注：用单位四元数旋转向量 p' = q p q*，其中 p 视为纯四元数 (0, p)。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>四元数没归一化 → 旋转矩阵带缩放，物体变形 → 使用前 normalize。</p></li><li><p>组合顺序搞反 → 旋转结果与预期相反 → 记住 q = q2 * q1 表示先 q1 后 q2。</p></li><li><p>把 θ 直接写进 cos/sin → 旋转角度翻倍 → 四元数用半角 θ/2。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FQuat 提供 FQuat(Axis, Angle) 构造，FQuat::operator* 组合旋转。</p></li><li><p>Unity 中 Quaternion.AngleAxis、Quaternion.LookRotation 直接构造四元数。</p></li></ul></div><div class="code-wrap"><p class="code-cap">单位四元数旋转向量（cpp）</p><pre class="code"><code class="lang-cpp">struct Quat { float w, x, y, z; };
+Vec3 rotate(Quat q, Vec3 p) {
+    // p' = q * (0,p) * q*
+    Quat qp = {0, p.x, p.y, p.z};
+    Quat qc = {q.w, -q.x, -q.y, -q.z};
+    Quat r = quatMul(quatMul(q, qp), qc);
+    return {r.x, r.y, r.z};
+}</code></pre></div></section><section class="sec" id="s7"><h2><span class="h2-no">07</span><span>7. 旋转插值：为什么不能直接线性插值，SLERP 怎么做</span></h2><div class="sec-body"><p>动画里经常需要在两个旋转之间过渡。平移可以直接线性插值：\( \mathbf{x}(t) = (1-t)\mathbf{x}_0 + t\mathbf{x}_1 \)。但旋转不行。</p>
+<p><strong>直接线性插值旋转矩阵</strong>：\( R(t) = (1-t)R_0 + tR_1 \) 一般不再是旋转矩阵（不正交），会导致缩放/剪切。</p>
+<p><strong>直接线性插值四元数</strong>：\( q(t) = (1-t)q_0 + tq_1 \) 一般不是单位四元数，需要再归一化（nlerp），但角速度不恒定。</p>
+<p><strong>SLERP（球面线性插值）</strong>：在单位四元数球面上沿大圆插值：
+\[ q(t) = \frac{\sin((1-t)\theta)}{\sin\theta} q_0 + \frac{\sin(t\theta)}{\sin\theta} q_1 \]
+其中 \( \cos\theta = q_0\cdot q_1 \)。它保证任意 t 都是单位四元数，且角速度恒定。</p>
+<p><strong>注意</strong>：四元数 q 与 -q 表示同一旋转，插值前要选符号使点积为正，否则会走远路。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES105/105_L02/p0138.webp" alt="图注：SLERP 公式，用 sin 权重在单位四元数球面上插值，保证结果始终是单位四元数。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.139</span><span>图注：SLERP 公式，用 sin 权重在单位四元数球面上插值，保证结果始终是单位四元数。</span></figcaption></figure><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>四元数插值未处理 q 与 -q → 旋转绕远路甚至翻转 → 插值前检查点积，若为负则取反一个四元数。</p></li><li><p>用 nlerp 代替 SLERP 且不归一化 → 旋转速度不均、模长漂移 → 至少每帧归一化，或直接用 SLERP。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中 FQuat::Slerp 提供球面插值，FQuat::FastLerp 是 nlerp。</p></li><li><p>Unity 中 Quaternion.Slerp 是标准插值，Quaternion.Lerp 是 nlerp。</p></li></ul></div><div class="code-wrap"><p class="code-cap">SLERP 伪代码（cpp）</p><pre class="code"><code class="lang-cpp">Quat slerp(Quat q0, Quat q1, float t) {
+    float d = dot(q0, q1);
+    if (d &lt; 0) { q1 = -q1; d = -d; }
+    if (d &gt; 0.9995f) return normalize(lerp(q0, q1, t));
+    float theta = acosf(d);
+    float s0 = sinf((1-t)*theta) / sinf(theta);
+    float s1 = sinf(t*theta) / sinf(theta);
+    return q0*s0 + q1*s1;
+}</code></pre></div></section><h2><span>引擎对照表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>概念 / 效果</th><th>Unreal Engine</th><th>Unity</th></tr></thead><tbody><tr><td><p>三维向量</p></td><td><p>FVector</p></td><td><p>Vector3</p></td></tr><tr><td><p>旋转（四元数）</p></td><td><p>FQuat</p></td><td><p>Quaternion</p></td></tr><tr><td><p>欧拉角</p></td><td><p>FRotator (Pitch/Yaw/Roll)</p></td><td><p>Vector3 eulerAngles</p></td></tr><tr><td><p>4×4 变换矩阵</p></td><td><p>FMatrix</p></td><td><p>Matrix4x4</p></td></tr><tr><td><p>球面插值</p></td><td><p>FQuat::Slerp</p></td><td><p>Quaternion.Slerp</p></td></tr><tr><td><p>轴角构造旋转</p></td><td><p>FQuat(Axis, Angle)</p></td><td><p>Quaternion.AngleAxis</p></td></tr></tbody></table></div><h2><span>术语双语表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>English</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>dot product</td><td>点积</td><td><p>两向量对应分量乘积之和，几何上等于模长乘积乘夹角余弦。</p></td></tr><tr><td>cross product</td><td>叉积</td><td><p>三维向量特有的运算，结果垂直于原两向量，方向由右手定则决定。</p></td></tr><tr><td>Rodrigues' rotation formula</td><td>罗德里格斯旋转公式</td><td><p>用轴和角直接构造旋转矩阵的公式。</p></td></tr><tr><td>orthogonal matrix</td><td>正交矩阵</td><td><p>满足 A^T A = I 的矩阵，逆等于转置，旋转矩阵是正交矩阵。</p></td></tr><tr><td>Euler angles</td><td>欧拉角</td><td><p>用绕三个坐标轴的转角表示旋转，直观但有万向锁问题。</p></td></tr><tr><td>gimbal lock</td><td>万向锁</td><td><p>欧拉角中两个旋转轴平行导致丢失一个自由度。</p></td></tr><tr><td>quaternion</td><td>四元数</td><td><p>形如 w + xi + yj + zk 的数，单位四元数可表示三维旋转。</p></td></tr><tr><td>SLERP</td><td>球面线性插值</td><td><p>在单位球面上沿大圆插值，保证角速度恒定。</p></td></tr><tr><td>skew-symmetric matrix</td><td>反对称矩阵</td><td><p>满足 A^T = -A 的矩阵，叉积可写成反对称矩阵乘向量。</p></td></tr></tbody></table></div><h2><span>课后练习</span></h2><div class="quiz"><p class="quiz-q"><span class="q-no">01</span><span><p>已知 a = (1, 0, 0)，b = (0, 1, 0)，求 a·b、a×b，并说明叉积结果的几何意义。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>直接套公式。</p></p><p class="quiz-a"><p>a·b = 1<em>0 + 0</em>1 + 0<em>0 = 0，说明两向量垂直。a×b = (0</em>0-0<em>1, 0</em>0-1<em>0, 1</em>1-0*0) = (0, 0, 1)，即 z 轴正方向，垂直于 a 和 b，符合右手定则。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">02</span><span><p>用 Rodrigues 公式写出绕 z 轴旋转 θ 的旋转矩阵，并与标准 Rz(θ) 对比。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>u = (0,0,1)，代入 R = I + sinθ [u]× + (1-cosθ)[u]×²。</p></p><p class="quiz-a"><p>u = (0,0,1)，[u]× = [[0,-1,0],[1,0,0],[0,0,0]]，[u]×² = [[-1,0,0],[0,-1,0],[0,0,0]]。代入得 R = [[cosθ, -sinθ, 0],[sinθ, cosθ, 0],[0,0,1]]，正是标准 Rz(θ)。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">03</span><span><p>为什么旋转矩阵不能直接线性插值？四元数直接线性插值有什么问题？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>考虑正交性和单位模长。</p></p><p class="quiz-a"><p>旋转矩阵线性插值后一般不满足正交性，会产生缩放/剪切。四元数线性插值后一般不是单位四元数，需要归一化；即使归一化（nlerp），角速度也不恒定，插值路径不是大圆。SLERP 在单位球面上沿大圆插值，保证单位模长和恒定角速度。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">04</span><span><p>在 UE 中，如何把一个 FRotator 转成 FQuat 再做 SLERP？写出关键代码。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>FRotator::Quaternion() 和 FQuat::Slerp。</p></p><p class="quiz-a"><p>FQuat q0 = Rotator0.Quaternion(); FQuat q1 = Rotator1.Quaternion(); FQuat q = FQuat::Slerp(q0, q1, t); 注意 Slerp 内部会处理符号，但自定义插值时需检查点积。</p></p></details></div><nav class="pager"><a class="cta prev" href="../GAMES105/105_L01.html"><span class="dir"><small>← 上一讲</small><b>L01 角色动画导论</b></span></a><a class="cta next" href="../GAMES105/105_L03.html"><span class="dir"><small>下一讲 →</small><b>L03 正向与逆向运动学</b></span></a></nav><footer class="page-foot"><span>本手册基于 GAMES105 课件整理，仅供个人学习使用。</span><span>课件版权归原作者与课程组所有。</span><span><a href="../index.html">手册首页</a> · <a href="../GAMES105/index.html">GAMES105 课程总览</a></span></footer></article></main></div><div class="reading-bar" id="reading-bar" aria-hidden="true"></div><div class="search-overlay" id="search-overlay"><div class="search-panel" role="dialog" aria-modal="true" aria-label="搜索手册"><div class="search-input-row"><span class="ico" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索知识点、术语、常见坑、讲次…" autocomplete="off" aria-label="搜索关键词"><kbd>Esc</kbd></div><div class="search-list" id="search-list"></div><div class="search-hint"><span>↑↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div></div></div><div class="lightbox" id="lightbox" aria-hidden="true"></div><script src="../assets/katex/katex.min.js"></script><script src="../assets/katex/contrib/auto-render.min.js"></script><script src="../assets/search-index.js"></script><script src="../assets/app.js"></script><script>document.addEventListener("DOMContentLoaded",function(){if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:false});});</script></body></html>

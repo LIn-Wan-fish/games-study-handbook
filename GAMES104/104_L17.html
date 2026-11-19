@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-tone="2" data-root="../">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 17 讲：社区之声与进阶 AI 系统——HTN、GOAP、MCTS 与机器学习入门 · GAMES 学习手册</title>
+<meta name="description" content="从分层任务网络到蒙特卡洛树搜索，再到强化学习，讲清楚游戏 AI 如何从“手写规则”走向“自动规划与学习”。">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230066cc'/%3E%3Ctext x='16' y='22' font-family='-apple-system,Segoe UI,sans-serif' font-size='17' font-weight='800' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var t = q === 'light' || q === 'dark' ? q : localStorage.getItem('theme');
+    var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+</script>
+</head><div class="bg-aura" aria-hidden="true"></div><header class="topbar"><div class="topbar-left"><a class="nav-pill brand-pill" href="../index.html" aria-label="GAMES 学习手册首页"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-text"><b>GAMES 学习手册</b><small>计算机图形学 · 3A 游戏开发</small></span></a><span class="nav-pill crumb-pill"><a href="../index.html">首页</a> / <a href="../GAMES104/index.html">GAMES104</a> / <b>进阶 AI 与机器学习</b></span></div><nav class="topbar-center seg-tabs" aria-label="课程切换"><a class="seg-tab" href="../GAMES101/index.html" data-tone="1"><span class="seg-code">GAMES101</span></a><a class="seg-tab active" href="../GAMES104/index.html" data-tone="2"><span class="seg-code">GAMES104</span></a><a class="seg-tab" href="../GAMES202/index.html" data-tone="3"><span class="seg-code">GAMES202</span></a><a class="seg-tab" href="../GAMES105/index.html" data-tone="4"><span class="seg-code">GAMES105</span></a></nav><div class="topbar-right"><button class="topbar-ctl search-btn" type="button" data-search-open aria-label="搜索知识点"><span class="s-ico" aria-hidden="true">⌕</span><span class="s-label">搜索</span><kbd>/</kbd></button><button class="topbar-ctl theme-btn" type="button" data-theme-toggle aria-label="切换主题"><span aria-hidden="true">◐</span><span class="t-label" data-theme-label>浅色</span></button><button class="topbar-ctl print-btn" type="button" data-print aria-label="打印本页"><span class="p-ico" aria-hidden="true">⎙</span><span class="p-label">打印</span></button><button class="topbar-ctl menu-btn" type="button" data-side-toggle aria-label="打开目录" aria-expanded="false">☰</button></div></header><div class="shell-body"><aside class="sidebar material" aria-label="目录"><div class="side-block"><p class="sidebar-h">本讲目录</p><ul class="toc page-toc"><li><a href="#s1">1. 从社区反馈到本讲主线：为什么需要更高级的 AI</a></li><li><a href="#s2">2. HTN：像人一样分层做计划</a></li><li><a href="#s3">3. GOAP：从目标反向找动作</a></li><li><a href="#s4">4. MCTS：在“脑内”模拟成千上万局</a></li><li><a href="#s5">5. 机器学习基础：四种学习范式与强化学习</a></li><li><a href="#s6">6. 用机器学习构建进阶游戏 AI：从状态设计到训练策略</a></li></ul></div><div class="side-block"><p class="sidebar-h">全部讲次<span class="count">20 讲</span></p><ul class="toc lecture-toc"><li><a href="../GAMES104/index.html"><span class="lec-no">◎</span><span>课程总览</span></a></li><li><a class="" href="../GAMES104/104_L01.html"><span class="lec-no">L01</span><span>游戏引擎导论</span></a></li><li><a class="" href="../GAMES104/104_L02.html"><span class="lec-no">L02</span><span>引擎分层架构</span></a></li><li><a class="" href="../GAMES104/104_L03.html"><span class="lec-no">L03</span><span>构建游戏世界</span></a></li><li><a class="" href="../GAMES104/104_L04.html"><span class="lec-no">L04</span><span>渲染总览</span></a></li><li><a class="" href="../GAMES104/104_L05.html"><span class="lec-no">L05</span><span>渲染：光照材质着色器</span></a></li><li><a class="" href="../GAMES104/104_L06.html"><span class="lec-no">L06</span><span>渲染：地形/天空/云</span></a></li><li><a class="" href="../GAMES104/104_L07.html"><span class="lec-no">L07</span><span>渲染管线与后处理</span></a></li><li><a class="" href="../GAMES104/104_L08.html"><span class="lec-no">L08</span><span>动画系统</span></a></li><li><a class="" href="../GAMES104/104_L09.html"><span class="lec-no">L09</span><span>动画系统进阶</span></a></li><li><a class="" href="../GAMES104/104_L10.html"><span class="lec-no">L10</span><span>物理系统</span></a></li><li><a class="" href="../GAMES104/104_L11.html"><span class="lec-no">L11</span><span>物理系统应用</span></a></li><li><a class="" href="../GAMES104/104_L12.html"><span class="lec-no">L12</span><span>粒子与音频</span></a></li><li><a class="" href="../GAMES104/104_L14.html"><span class="lec-no">L14</span><span>工具链</span></a></li><li><a class="" href="../GAMES104/104_L15.html"><span class="lec-no">L15</span><span>玩法系统 Gameplay</span></a></li><li><a class="" href="../GAMES104/104_L16.html"><span class="lec-no">L16</span><span>游戏 AI 基础</span></a></li><li><a class="active" href="../GAMES104/104_L17.html"><span class="lec-no">L17</span><span>进阶 AI 与机器学习</span></a></li><li><a class="" href="../GAMES104/104_L18.html"><span class="lec-no">L18</span><span>在线游戏架构</span></a></li><li><a class="" href="../GAMES104/104_L19.html"><span class="lec-no">L19</span><span>在线游戏架构（下）</span></a></li><li><a class="" href="../GAMES104/104_L20.html"><span class="lec-no">L20</span><span>面向数据编程与 Job Syst</span></a></li><li><a class="" href="../GAMES104/104_L21.html"><span class="lec-no">L21</span><span>动态全局光照与 Lumen</span></a></li></ul></div><div class="side-foot">基于 GAMES104 课件整理 · 仅供个人学习<br><a href="../index.html">← 返回手册首页</a></div></aside><div class="side-scrim"></div><main class="page"><article class="article"><header class="ch-head"><span class="ch-course">GAMES104 · 现代游戏引擎：理论、实践与架构</span><h1 class="ch-title">第 17 讲：社区之声与进阶 AI 系统——HTN、GOAP、MCTS 与机器学习入门</h1><p class="ch-sub">从分层任务网络到蒙特卡洛树搜索，再到强化学习，讲清楚游戏 AI 如何从“手写规则”走向“自动规划与学习”。</p><div class="ch-meta"><span class="chip">课件 <b>114</b> 页</span><span class="chip">精讲 <b>6</b> 节</span><span class="chip">术语 <b>9</b> 条</span><span class="chip">练习 <b>5</b> 道</span></div></header><div class="objectives"><div class="callout key"><p class="callout-h">◆ 学完这一讲，你应该能</p><ul><li><p>能用自己的话解释 HTN、GOAP、MCTS 三种规划方法的核心思想与区别</p></li><li><p>能画出 HTN 的规划流程，并说明原始任务与复合任务、方法、前提条件之间的关系</p></li><li><p>能说明 GOAP 如何通过目标、动作、代价和反向规划生成行为序列</p></li><li><p>能描述 MCTS 的四个迭代步骤（选择、扩展、模拟、回传）以及 UCB 如何平衡探索与利用</p></li><li><p>能区分监督学习、无监督学习、半监督学习和强化学习，并说明强化学习在游戏 AI 中的典型用法</p></li><li><p>能针对一个具体游戏（如 RTS）设计状态、动作、奖励和网络结构，并说明 SL 与 RL 的取舍</p></li></ul></div></div><div class="keybox"><p class="keybox-h">核心结论速记</p><ol class="keybox-list"><li><p>HTN 用分层任务分解来规划：复合任务通过方法分解为子任务，原始任务对应具体动作，规划时按顺序检查前提条件并更新世界状态。</p></li><li><p>GOAP 从目标反向搜索动作，每个动作有前提、效果和代价，最终用 A* 等算法在状态-动作-代价图中找最低代价路径。</p></li><li><p>MCTS 通过大量随机模拟来评估动作价值，用 UCB 公式平衡探索与利用，适合状态空间巨大甚至“无限”的博弈场景。</p></li><li><p>强化学习用马尔可夫决策过程（MDP）建模：智能体在环境中根据策略选择动作，获得奖励，目标是最大化长期回报。</p></li><li><p>游戏 AI 的机器学习落地需要精心设计状态表示、动作空间、奖励函数和神经网络结构，AlphaStar 和 OpenAI Five 是典型工程案例。</p></li><li><p>监督学习需要高质量标注数据，强化学习需要可模拟的环境和稠密奖励；实际项目常采用“宏观用学习、微观用 FSM/BT”的混合架构。</p></li></ol></div><section class="sec" id="s1"><h2><span class="h2-no">01</span><span>1. 从社区反馈到本讲主线：为什么需要更高级的 AI</span></h2><div class="sec-body"><p>这一讲开头先处理了一些社区事务：T 恤样式投票结果、感谢社区贡献的笔记、以及几个 Q&amp;A 问题（例如“AI 直接读玩家操作指令”的看法）。这些内容本身不是技术核心，但传递了一个信号：现代游戏引擎的 AI 系统已经不再是简单的“巡逻-追击-攻击”状态机，社区和玩家都在期待更聪明、更自然的行为。</p>
+<p>课件随后给出本讲大纲：<strong>分层任务网络（Hierarchical Tasks Network, HTN）</strong>、<strong>目标导向动作规划（Goal-Oriented Action Planning, GOAP）</strong>、<strong>蒙特卡洛树搜索（Monte Carlo Tree Search, MCTS）</strong>，以及<strong>机器学习基础</strong>和<strong>如何用机器学习构建进阶游戏 AI</strong>。这四块内容正好对应一条演进路线：</p>
+<ul>
+<li>HTN 和 GOAP 属于“手工知识 + 自动规划”，设计师写规则，AI 自己组合出行为序列；</li>
+<li>MCTS 属于“自动搜索”，AI 通过模拟来评估未来；</li>
+<li>机器学习（尤其是强化学习）则让 AI 从数据或交互中自己学策略。</li>
+</ul>
+<p>理解这条路线，你就能在 UE 或 Unity 里判断：什么时候用行为树（Behavior Tree, BT）就够了，什么时候需要 HTN/GOAP，什么时候才值得上机器学习。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0005.webp" alt="图注：本讲大纲页，列出 HTN、GOAP、MCTS 和机器学习四大块，注意它们之间的递进关系。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.6</span><span>图注：本讲大纲页，列出 HTN、GOAP、MCTS 和机器学习四大块，注意它们之间的递进关系。</span></figcaption></figure><div class="callout key"><p class="callout-h">补充说明</p><p>本讲涉及的 AI 规划方法在 3A 项目中常作为“决策层”，动画和移动仍由动画蓝图、导航系统负责。</p></div><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>把 HTN/GOAP 当成“替代行为树”的银弹 → 它们解决的是“生成计划”的问题，执行层仍常配合 BT/FSM → 先明确你的需求是“行为组合复杂”还是“单步决策复杂”。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 的 Behavior Tree 适合表达固定的行为层次，但节点间的动态组合能力弱；HTN/GOAP 通常需要自己写插件或 C++ 系统来实现。</p></li><li><p>Unity 的 Behavior Designer、NodeCanvas 等插件提供 BT/FSM，HTN/GOAP 也有第三方库，但核心规划器往往要自己维护。</p></li></ul></div></section><section class="sec" id="s2"><h2><span class="h2-no">02</span><span>2. HTN：像人一样分层做计划</span></h2><div class="sec-body"><p><strong>分层任务网络（HTN）</strong>的核心直觉是：人做计划是分层的。比如“我要解毒”，可以分解为“找到药水”和“使用药水”；“找到药水”又可以分解为“去商店买”或“去野外采”。每一层只关心当前层的选择，而不是一上来就列出一长串原子动作。</p>
+<p>HTN 框架包含几个关键部分：</p>
+<ul>
+<li><strong>世界状态（World State）</strong>：一组属性，比如“是否有药水”“是否中毒”“材料是否足够”。它是规划器的输入，反映当前世界。</li>
+<li><strong>HTN 域（Domain）</strong>：通常从资产文件加载，描述分层任务之间的关系，包括任务、方法、前提条件等。</li>
+<li><strong>任务类型</strong>：分为<strong>原始任务（Primitive Task）</strong>和<strong>复合任务（Compound Task）</strong>。原始任务对应具体动作，有前提条件；复合任务包含多个<strong>方法（Method）</strong>，每个方法有自己的前提条件，并分解为若干子任务。</li>
+</ul>
+<p>规划时从<strong>根任务（Root Task）</strong>开始，递归地选择满足前提条件的方法，把复合任务分解为子任务，直到全部变成原始任务。规划过程中会<strong>假设动作成功</strong>并更新世界状态，如果后续前提条件不满足，就回溯选择其他方法。</p>
+<p>HTN 的优点是结构清晰、可控性强，设计师能精确控制 AI 的行为逻辑；缺点是灵活性受限于预先写好的方法，遇到未预料的情况可能无计划可用。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0009.webp" alt="图注：HTN 框架中的世界状态与域，注意世界状态是规划器的输入，域描述任务层次关系。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.10</span><span>图注：HTN 框架中的世界状态与域，注意世界状态是规划器的输入，域描述任务层次关系。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0018.webp" alt="图注：HTN 规划步骤示意，从根任务开始选择方法并分解，注意前提条件的检查顺序。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.19</span><span>图注：HTN 规划步骤示意，从根任务开始选择方法并分解，注意前提条件的检查顺序。</span></figcaption></figure><div class="callout key"><p class="callout-h">补充说明</p><p>HTN 的“假设成功”是规划阶段的简化，运行时仍需检查动作是否真正成功。</p></div><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>世界状态属性设计太粗 → 规划器无法区分细微差别，导致方法选择错误 → 把关键条件拆成独立布尔/枚举属性。</p></li><li><p>方法的前提条件互相覆盖不全 → 规划失败时没有备选方法 → 为每个复合任务至少准备一个“兜底”方法。</p></li><li><p>规划时假设动作一定成功，但运行时可能失败 → 需要重规划（Replan）机制 → 在动作执行失败或世界状态变化时触发重新规划。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中可用 C++ 或蓝图实现 HTN 规划器，世界状态可以放在 GameState 或自定义 UWorldSubsystem 中。</p></li><li><p>Unity 中可用 ScriptableObject 定义 HTN 域，运行时用 C# 规划器解析。</p></li></ul></div><div class="code-wrap"><p class="code-cap">HTN 规划伪代码（简化）（cpp）</p><pre class="code"><code class="lang-cpp">bool Plan(WorldState&amp; ws, Task* task, vector&lt;PrimitiveTask*&gt;&amp; plan) {
+  if (task-&gt;IsPrimitive()) {
+    if (!task-&gt;Precondition(ws)) return false;
+    plan.push_back(task);
+    task-&gt;ApplyEffect(ws); // 假设成功，更新世界状态
+    return true;
+  }
+  for (auto&amp; method : task-&gt;Methods()) {
+    if (!method.Precondition(ws)) continue;
+    WorldState backup = ws;
+    bool ok = true;
+    for (auto* sub : method.SubTasks()) {
+      if (!Plan(ws, sub, plan)) { ok = false; break; }
+    }
+    if (ok) return true;
+    ws = backup; // 回溯
+    plan.resize(plan.size() - method.SubTasks().size());
+  }
+  return false;
+}</code></pre></div></section><section class="sec" id="s3"><h2><span class="h2-no">03</span><span>3. GOAP：从目标反向找动作</span></h2><div class="sec-body"><p><strong>目标导向动作规划（GOAP）</strong>比 HTN 更自动化：它不预先规定任务层次，而是把每个动作描述成“前提条件 + 效果 + 代价”，然后从目标状态反向搜索，找到一条从当前状态到目标状态的动作序列。</p>
+<p>GOAP 的结构包括：</p>
+<ul>
+<li><strong>传感器与世界状态</strong>：和 HTN 类似，传感器收集信息，世界状态是一组属性。</li>
+<li><strong>目标集（Goal Set）</strong>：每个目标有前提条件和优先级，规划时按优先级检查，选择第一个前提条件满足的目标。</li>
+<li><strong>动作集（Action Set）</strong>：每个动作有前提条件、效果和代价。</li>
+</ul>
+<p>规划时，GOAP 先比较目标状态和当前世界状态，找出<strong>未满足的状态</strong>，把它们放入栈；然后从栈顶取出一个未满足状态，选择一个能产生该状态效果的动作，把动作压入计划栈，并把该动作的前提条件作为新的未满足状态继续检查。如果前提条件不满足，就继续反向找动作，直到所有前提条件都满足。</p>
+<p>这个过程可以转化为<strong>状态-动作-代价图</strong>上的路径规划问题：节点是状态的组合，边是动作，边权是代价，然后用 A* 等算法找最低代价路径。GOAP 的优点是动态灵活，目标和行为解耦；缺点是规划结果可能不如 HTN 可控，且代价函数设计需要经验。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0034.webp" alt="图注：GOAP 反向规划示意，从目标状态出发，逐步找动作满足前提条件。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.35</span><span>图注：GOAP 反向规划示意，从目标状态出发，逐步找动作满足前提条件。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0039.webp" alt="图注：将 GOAP 转化为状态-动作-代价图，注意节点和边的含义。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.40</span><span>图注：将 GOAP 转化为状态-动作-代价图，注意节点和边的含义。</span></figcaption></figure><div class="callout key"><p class="callout-h">补充说明</p><p>实际工程中常用 A* 在状态空间搜索，而不是简单的栈式反向链，以处理动作之间的相互影响。</p></div><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>动作效果写错（比如“使用药水”没有把“中毒”置为 false）→ 规划器找不到可行路径 → 逐个检查动作效果与世界状态属性是否一致。</p></li><li><p>代价函数全设为 1 → 规划器无法区分优劣，可能选出绕远路的方案 → 根据距离、风险、资源消耗设置合理代价。</p></li><li><p>目标优先级冲突 → 高优先级目标永远无法满足时，低优先级目标被饿死 → 设置超时或降级机制。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中可用 C++ 实现 GOAP 规划器，动作可继承 UObject，便于在编辑器里配置。</p></li><li><p>Unity 中可用 ScriptableObject 定义动作和目标，运行时用 A* 在状态图上搜索。</p></li></ul></div><div class="code-wrap"><p class="code-cap">GOAP 反向规划伪代码（简化）（cpp）</p><pre class="code"><code class="lang-cpp">bool BackwardPlan(WorldState&amp; ws, Goal&amp; goal, vector&lt;Action*&gt;&amp; plan) {
+  stack&lt;Condition&gt; unsatisfied;
+  for (auto&amp; c : goal.Conditions())
+    if (!ws.Check(c)) unsatisfied.push(c);
+  while (!unsatisfied.empty()) {
+    Condition c = unsatisfied.top(); unsatisfied.pop();
+    Action* best = nullptr;
+    for (auto* a : actions)
+      if (a-&gt;Effect().Satisfies(c) &amp;&amp; (!best || a-&gt;Cost() &lt; best-&gt;Cost()))
+        best = a;
+    if (!best) return false;
+    plan.push_back(best);
+    for (auto&amp; pre : best-&gt;Preconditions())
+      if (!ws.Check(pre)) unsatisfied.push(pre);
+  }
+  reverse(plan.begin(), plan.end());
+  return true;
+}</code></pre></div></section><section class="sec" id="s4"><h2><span class="h2-no">04</span><span>4. MCTS：在“脑内”模拟成千上万局</span></h2><div class="sec-body"><p><strong>蒙特卡洛树搜索（MCTS）</strong>的直觉像下棋：高手会在脑中模拟很多种走法，选择看起来最有希望的那一步。MCTS 把这种“脑内模拟”变成算法：它维护一棵搜索树，节点是游戏状态，边是动作，通过大量随机模拟来评估每个动作的价值。</p>
+<p>MCTS 的一次迭代包含四个步骤：</p>
+<ol>
+<li><strong>选择（Selection）</strong>：从根节点开始，按照一定策略（如 UCB）选择“最值得扩展”的子节点，直到到达一个可扩展节点。</li>
+<li><strong>扩展（Expansion）</strong>：为选中的节点添加一个或多个新的子节点，对应未尝试过的动作。</li>
+<li><strong>模拟（Simulation）</strong>：从新节点开始，按照默认策略（通常是随机走子）快速模拟到终局，得到一个结果。</li>
+<li><strong>回传（Backpropagation）</strong>：把模拟结果沿着路径回传，更新每个节点的统计值（如访问次数、累计奖励）。</li>
+</ol>
+<p>如何平衡“探索”和“利用”？MCTS 常用 <strong>UCB（Upper Confidence Bounds）</strong> 公式：
+\[ \text{UCB} = \frac{Q_i}{N_i} + c \sqrt{\frac{\ln N}{N_i}} \]
+其中 \(Q_i\) 是节点累计奖励，\(N_i\) 是节点访问次数，\(N\) 是父节点访问次数，\(c\) 是探索常数。第一项偏向利用（平均奖励高的节点），第二项偏向探索（访问次数少的节点）。</p>
+<p>MCTS 的优点是能处理巨大的状态空间，行为多样，不需要手工设计评估函数；缺点是需要大量计算，实时性要求高的游戏要限制模拟次数或使用轻量级模拟。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0054.webp" alt="图注：MCTS 迭代四步骤（选择、扩展、模拟、回传）示意图，注意每一步在树上的位置。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.55</span><span>图注：MCTS 迭代四步骤（选择、扩展、模拟、回传）示意图，注意每一步在树上的位置。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0058.webp" alt="图注：UCB 公式页，注意公式中两项分别代表利用和探索。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.59</span><span>图注：UCB 公式页，注意公式中两项分别代表利用和探索。</span></figcaption></figure><div class="callout key"><p class="callout-h">补充说明</p><p>MCTS 在棋类游戏（如 AlphaGo）中表现突出，在实时动作游戏中常与行为树结合，作为高层决策器。</p></div><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>模拟次数太少 → 统计值不可靠，决策随机性大 → 增加迭代次数或使用启发式模拟策略。</p></li><li><p>UCB 的探索常数 c 设得太大 → 算法过于随机，忽略已知好动作 → 根据游戏分支因子调整 c，通常从 1.0 附近试起。</p></li><li><p>终局奖励设计不合理 → 模拟结果无法反映真实优劣 → 确保模拟的胜负判定与实际游戏规则一致。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中可用 C++ 实现 MCTS，模拟阶段可以调用简化版游戏逻辑（不渲染、不播放动画）来加速。</p></li><li><p>Unity 中可用 Job System/Burst 加速模拟，但要注意状态拷贝的开销。</p></li></ul></div><div class="code-wrap"><p class="code-cap">MCTS 单次迭代伪代码（cpp）</p><pre class="code"><code class="lang-cpp">Node* Select(Node* root) {
+  Node* node = root;
+  while (!node-&gt;IsLeaf() &amp;&amp; node-&gt;IsFullyExpanded()) {
+    node = node-&gt;BestChildByUCB();
+  }
+  return node;
+}
+void Iterate(Node* root) {
+  Node* leaf = Select(root);
+  Node* child = leaf-&gt;Expand();
+  float result = Simulate(child-&gt;State());
+  while (child) {
+    child-&gt;VisitCount++;
+    child-&gt;TotalReward += result;
+    child = child-&gt;Parent();
+  }
+}</code></pre></div></section><section class="sec" id="s5"><h2><span class="h2-no">05</span><span>5. 机器学习基础：四种学习范式与强化学习</span></h2><div class="sec-body"><p>课件把机器学习分为四类：</p>
+<ul>
+<li><strong>监督学习（Supervised Learning）</strong>：从带标签的数据中学习，比如给大量“状态-正确动作”对，训练网络模仿。</li>
+<li><strong>无监督学习（Unsupervised Learning）</strong>：从无标签数据中找结构，游戏 AI 中较少直接使用。</li>
+<li><strong>半监督学习（Semi-supervised Learning）</strong>：少量标签 + 大量无标签数据。</li>
+<li><strong>强化学习（Reinforcement Learning, RL）</strong>：智能体与环境交互，根据奖励信号学习策略。</li>
+</ul>
+<p>强化学习用<strong>马尔可夫决策过程（Markov Decision Process, MDP）</strong>建模，基本元素包括：</p>
+<ul>
+<li><strong>智能体（Agent）</strong>：学习者和决策者。</li>
+<li><strong>环境（Environment）</strong>：智能体交互的外部世界。</li>
+<li><strong>状态（State）</strong>：智能体对环境的观察，通常是一个数据结构。</li>
+<li><strong>动作（Action）</strong>：智能体可执行的最小行为单元。</li>
+<li><strong>奖励（Reward）</strong>：每个时间步收到的特殊信号，指导学习。</li>
+<li><strong>策略（Policy）</strong>：从状态到动作概率的映射 \(\pi(a|s)\)。</li>
+</ul>
+<p>MDP 还包含<strong>转移概率</strong> \(P(s'|s,a)\)，表示在状态 \(s\) 执行动作 \(a\) 后到达 \(s'\) 的概率。强化学习的目标是找到最优策略，最大化长期累积奖励。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0072.webp" alt="图注：强化学习基本框架，智能体与环境交互，产生状态、动作和奖励。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.73</span><span>图注：强化学习基本框架，智能体与环境交互，产生状态、动作和奖励。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0077.webp" alt="图注：MDP 数学模型中转移概率与策略的定义，注意策略是状态到动作概率的映射。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.78</span><span>图注：MDP 数学模型中转移概率与策略的定义，注意策略是状态到动作概率的映射。</span></figcaption></figure><div class="callout key"><p class="callout-h">补充说明</p><p>ML-Agents 是 Unity 官方强化学习工具，适合入门；UE 没有官方对应工具，通常需要自己搭训练管线。</p></div><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>把监督学习的数据集直接用于 RL → RL 需要交互和奖励，不是静态标签 → 明确问题类型再选方法。</p></li><li><p>状态表示遗漏关键信息（如冷却时间、视野）→ 智能体无法做出正确决策 → 检查状态是否满足马尔可夫性。</p></li><li><p>奖励稀疏导致学习困难 → 智能体很少收到有效信号 → 设计稠密奖励或使用课程学习。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中可用 Python 训练 RL 模型，再通过 ONNX 或自定义插件在 C++ 中推理。</p></li><li><p>Unity 提供 ML-Agents 工具包，支持用 Python 训练并在 Unity 中推理。</p></li></ul></div></section><section class="sec" id="s6"><h2><span class="h2-no">06</span><span>6. 用机器学习构建进阶游戏 AI：从状态设计到训练策略</span></h2><div class="sec-body"><p>课件以 RTS 游戏为例，展示如何把游戏建模成 DRL 问题：</p>
+<ul>
+<li><strong>状态（State）</strong>：包括地图信息（高度、可见性、迷雾、可通行、可建造）、单位信息（类型、所有者、状态、位置等）。</li>
+<li><strong>动作（Action）</strong>：对每个单位，动作包括“做什么”（移动、攻击、建造）、“对谁”、“在哪里”、“何时”。</li>
+<li><strong>奖励（Reward）</strong>：直接奖励如胜利 +1、失败 -1；也可以设计伪奖励（如击杀、资源采集）来加速学习。OpenAI Five 在 Dota2 中使用了更稠密的奖励设计。</li>
+</ul>
+<p>神经网络结构选择取决于特征类型：</p>
+<ul>
+<li><strong>多层感知机（MLP）</strong>：经典、易实现，适合低维向量特征。</li>
+<li><strong>卷积神经网络（CNN）</strong>：对图像数据敏感，适合处理地图。</li>
+<li><strong>Transformer</strong>：引入注意力机制，适合不定长向量和单位集合。</li>
+<li><strong>LSTM</strong>：让 AI 记住或遗忘早期信息，适合部分可观测环境。</li>
+</ul>
+<p>训练策略上，AlphaStar 先用<strong>监督学习</strong>从人类录像中学习基础策略，再用<strong>强化学习</strong>自我对弈提升；训练时使用多个智能体池（主池、利用池、联盟池）进行对抗，避免过拟合。</p>
+<p>课件最后讨论了 RL 与 SL 的取舍：SL 需要高质量数据，容易实现但上限受数据限制；RL 更动态，但需要可模拟环境和稠密奖励。实际项目常采用<strong>混合架构</strong>：宏观决策用学习模型，微观执行用 FSM/BT，以平衡效果和成本。</p></div><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0084.webp" alt="图注：RTS 状态设计示例，包括地图高度、可见性、迷雾、单位信息等。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.85</span><span>图注：RTS 状态设计示例，包括地图高度、可见性、迷雾、单位信息等。</span></figcaption></figure><figure class="fig-wrap"><div class="fig"><img src="../assets/img/GAMES104/104_L17/p0097.webp" alt="图注：AlphaStar 的三池训练策略（主池、利用池、联盟池），注意自我对弈的对抗设计。" loading="lazy" decoding="async"></div><figcaption class="fig-cap"><span class="fig-tag">课件 P.98</span><span>图注：AlphaStar 的三池训练策略（主池、利用池、联盟池），注意自我对弈的对抗设计。</span></figcaption></figure><div class="callout key"><p class="callout-h">补充说明</p><p>工业级训练通常需要大量并行环境和分布式训练，个人开发者可从 ML-Agents 或小型游戏开始。</p></div><div class="callout warn "><p class="callout-h">常见坑</p><ul><li><p>状态特征未归一化 → 网络训练不稳定 → 对位置、血量等做归一化处理。</p></li><li><p>动作空间设计过大 → 学习效率低 → 分解动作（先选类型，再选目标），或使用动作掩码。</p></li><li><p>奖励函数设计不当 → 智能体学会“刷分”而不是赢 → 奖励要与最终目标一致，并做奖励裁剪。</p></li></ul></div><div class="callout tip "><p class="callout-h">UE / Unity 落地</p><ul><li><p>UE 中可用 ONNX Runtime 加载训练好的模型，在 C++ 中做推理；状态采集可通过自定义 Gameplay Debugger 或数据接口。</p></li><li><p>Unity ML-Agents 支持用 Python 训练，并通过 Barracuda 在 Unity 中推理，适合快速原型。</p></li></ul></div></section><h2><span>引擎对照表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>概念 / 效果</th><th>Unreal Engine</th><th>Unity</th></tr></thead><tbody><tr><td><p>行为树/状态机</p></td><td><p>Behavior Tree、State Tree</p></td><td><p>Behavior Designer、NodeCanvas、PlayMaker</p></td></tr><tr><td><p>HTN 规划</p></td><td><p>无官方内置，需自写 C++/插件</p></td><td><p>第三方库或自写 C#</p></td></tr><tr><td><p>GOAP 规划</p></td><td><p>无官方内置，需自写 C++/插件</p></td><td><p>第三方库或自写 C#</p></td></tr><tr><td><p>MCTS 搜索</p></td><td><p>C++ 实现，模拟阶段可调用简化逻辑</p></td><td><p>C# 实现，可用 Job System 加速</p></td></tr><tr><td><p>强化学习训练</p></td><td><p>Python 训练 + ONNX 推理</p></td><td><p>ML-Agents（Python 训练 + Barracuda 推理）</p></td></tr><tr><td><p>神经网络推理</p></td><td><p>ONNX Runtime、NNE（Neural Network Engine）</p></td><td><p>Barracuda、Sentis</p></td></tr></tbody></table></div><h2><span>术语双语表</span></h2><div class="tbl-scroll"><table class="tbl"><thead><tr><th>English</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>HTN (Hierarchical Tasks Network)</td><td>分层任务网络</td><td><p>用分层任务分解来生成计划，复合任务通过方法分解为子任务。</p></td></tr><tr><td>GOAP (Goal-Oriented Action Planning)</td><td>目标导向动作规划</td><td><p>从目标反向搜索动作，每个动作有前提、效果和代价。</p></td></tr><tr><td>MCTS (Monte Carlo Tree Search)</td><td>蒙特卡洛树搜索</td><td><p>通过大量随机模拟评估动作价值，用 UCB 平衡探索与利用。</p></td></tr><tr><td>UCB (Upper Confidence Bounds)</td><td>上置信界</td><td><p>MCTS 中选择节点的公式，兼顾平均奖励和访问次数。</p></td></tr><tr><td>MDP (Markov Decision Process)</td><td>马尔可夫决策过程</td><td><p>强化学习的数学框架，包含状态、动作、奖励、转移概率和策略。</p></td></tr><tr><td>Policy</td><td>策略</td><td><p>从状态到动作概率的映射，记作 π(a|s)。</p></td></tr><tr><td>Supervised Learning</td><td>监督学习</td><td><p>从带标签数据中学习输入到输出的映射。</p></td></tr><tr><td>Reinforcement Learning</td><td>强化学习</td><td><p>智能体通过与环境交互、根据奖励信号学习策略。</p></td></tr><tr><td>Self-Play</td><td>自我对弈</td><td><p>智能体与自己或历史版本对战来提升策略，AlphaStar 使用多池训练。</p></td></tr></tbody></table></div><h2><span>课后练习</span></h2><div class="quiz"><p class="quiz-q"><span class="q-no">01</span><span><p>HTN 中原始任务和复合任务的区别是什么？规划时如何处理复合任务？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从任务是否可直接执行、是否包含方法两个角度回答。</p></p><p class="quiz-a"><p>原始任务对应可直接执行的具体动作，有前提条件；复合任务包含多个方法，每个方法有前提条件并分解为若干子任务。规划时遇到复合任务，会遍历其方法，选择前提条件满足的方法，递归地规划其子任务；如果子任务规划失败，则回溯尝试下一个方法。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">02</span><span><p>GOAP 的反向规划中，如何确定一个动作是否应该被选中？请结合前提、效果和代价说明。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>从“满足未满足状态”和“代价最小”两个条件考虑。</p></p><p class="quiz-a"><p>当栈中取出一个未满足状态时，规划器会在动作集中寻找效果能够满足该状态的动作；如果有多个动作都能满足，则选择代价最小的那个。选中后，把该动作的前提条件作为新的未满足状态压栈，继续反向搜索，直到所有前提条件都满足。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">03</span><span><p>MCTS 的 UCB 公式中，两项分别代表什么？如果探索常数 c 设得过大或过小，会有什么现象？</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>第一项是平均奖励，第二项与访问次数有关。</p></p><p class="quiz-a"><p>UCB 公式为 Q_i/N_i + c*sqrt(ln N / N_i)。第一项 Q_i/N_i 是利用项，表示该节点的平均奖励；第二项是探索项，访问次数 N_i 越小，探索项越大。c 过大时，算法偏向探索，行为随机，可能忽略已知好动作；c 过小时，算法偏向利用，容易陷入局部最优。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">04</span><span><p>假设你要为一个 RTS 游戏设计强化学习的状态和动作，请列出至少 5 个状态特征和 3 类动作。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>参考课件中地图信息和单位信息的分类。</p></p><p class="quiz-a"><p>状态特征示例：地图高度、可见性（迷雾）、可通行区域、单位类型、单位位置、单位血量、资源数量。动作类别示例：移动（到某位置）、攻击（某目标）、建造（某建筑）、采集（某资源）。动作还可以进一步分解为“做什么、对谁、在哪里、何时”。</p></p></details></div><div class="quiz"><p class="quiz-q"><span class="q-no">05</span><span><p>在什么情况下你会选择监督学习而不是强化学习？请结合数据、奖励和环境三个因素说明。</p></span></p><details class="quiz-details"><summary>查看答案</summary><p class="quiz-hint">提示：<p>考虑数据获取难度、奖励稀疏性和环境模拟成本。</p></p><p class="quiz-a"><p>当有大量高质量人类录像或标注数据、且行为可以模仿时，监督学习更合适；当奖励稀疏、环境模拟成本高、难以设计稠密奖励时，强化学习训练困难，此时监督学习或混合方法更实际。反之，如果环境可快速模拟、奖励设计合理，强化学习能超越人类数据上限。</p></p></details></div><nav class="pager"><a class="cta prev" href="../GAMES104/104_L16.html"><span class="dir"><small>← 上一讲</small><b>L16 游戏 AI 基础</b></span></a><a class="cta next" href="../GAMES104/104_L18.html"><span class="dir"><small>下一讲 →</small><b>L18 在线游戏架构</b></span></a></nav><footer class="page-foot"><span>本手册基于 GAMES104 课件整理，仅供个人学习使用。</span><span>课件版权归原作者与课程组所有。</span><span><a href="../index.html">手册首页</a> · <a href="../GAMES104/index.html">GAMES104 课程总览</a></span></footer></article></main></div><div class="reading-bar" id="reading-bar" aria-hidden="true"></div><div class="search-overlay" id="search-overlay"><div class="search-panel" role="dialog" aria-modal="true" aria-label="搜索手册"><div class="search-input-row"><span class="ico" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索知识点、术语、常见坑、讲次…" autocomplete="off" aria-label="搜索关键词"><kbd>Esc</kbd></div><div class="search-list" id="search-list"></div><div class="search-hint"><span>↑↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div></div></div><div class="lightbox" id="lightbox" aria-hidden="true"></div><script src="../assets/katex/katex.min.js"></script><script src="../assets/katex/contrib/auto-render.min.js"></script><script src="../assets/search-index.js"></script><script src="../assets/app.js"></script><script>document.addEventListener("DOMContentLoaded",function(){if(window.renderMathInElement)renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"$",right:"$",display:false}],throwOnError:false,strict:false});});</script></body></html>
